@@ -58,11 +58,11 @@ PageBuilder - HTTPServer
 
 ### Compile
 
-g++ sar_system.cpp -lws2_32 -o sar_system
+`g++ sar_system.cpp -lws2_32 -o sar_system`
 
 ### Run
 
-sar_system.exe
+`sar_system.exe`
 
 ------------------------------------------------------------------------
 
@@ -71,14 +71,14 @@ sar_system.exe
 1.  Start the program.
 2.  Open a browser and go to:
 
-http://localhost:9090
+`http://localhost:9090`
 
 3.  Login using demo credentials:
 
-  Username   Password
-  ---------- ----------
-  kanchan    1234
-  vedika     5678
+| Username | Password |
+|----------|----------|
+| kanchan  | 1234     |
+| vedika   | 5678     |
 
 4.  Use the dashboard to:
 
@@ -102,10 +102,6 @@ Each rule contributes to a **risk score out of 100**.
 
 Single file project:
 
-sar_system.cpp
+`sar_system.cpp`
 
 ------------------------------------------------------------------------
-
-## License
-
-This project is created for **educational and demonstration purposes**.
