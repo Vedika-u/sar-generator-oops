@@ -62,7 +62,6 @@ public:
         return (username == u && password == p);
     }
 
-    // Getters (Encapsulation)
     string getUsername() const { return username; }
     string getFullName() const { return fullName; }
     string getAccountNumber() const { return accountNumber; }
@@ -70,7 +69,6 @@ public:
     string getCountry() const { return country; }
     AccountStatus getStatus() const { return status; }
 
-    // State Machine Transitions
     void setStatus(AccountStatus s) { status = s; }
     void debit(double amt) { accountBalance -= amt; }
     void credit(double amt) { accountBalance += amt; }
@@ -94,7 +92,6 @@ public:
 
     virtual ~BaseTransaction() = default;
 
-    // Pure virtual functions (Abstraction)
     virtual bool isSuspicious() const = 0;
     virtual double calculateRiskScore() const = 0;
     virtual string getRiskCategory() const = 0;
@@ -108,53 +105,35 @@ public:
     string getCountry() const { return country; }
 };
 
-// Derived Class 1: Standard Normal Transaction (Demonstrates Inheritance)
+// Derived Class 1: Standard Normal Transaction (Inheritance)
 class NormalTransaction : public BaseTransaction {
 public:
     NormalTransaction(string id, string from, string to, double amt, string time, string ctry = "US")
         : BaseTransaction(id, from, to, amt, time, ctry) {}
 
-    bool isSuspicious() const override {
-        return false;
-    }
-
-    double calculateRiskScore() const override {
-        return 15.0; // Low baseline risk
-    }
-
-    string getRiskCategory() const override {
-        return "Normal / Verified";
-    }
-
-    string getTransactionType() const override {
-        return "Standard Domestic Clearing";
-    }
+    bool isSuspicious() const override { return false; }
+    double calculateRiskScore() const override { return 15.0; }
+    string getRiskCategory() const override { return "Normal / Verified"; }
+    string getTransactionType() const override { return "Standard Domestic Clearing"; }
 };
 
-// Derived Class 2: High-Value Transaction (Polymorphism: Overrides threshold checks)
+// Derived Class 2: High-Value Transaction (Polymorphism)
 class HighValueTransaction : public BaseTransaction {
 public:
     HighValueTransaction(string id, string from, string to, double amt, string time, string ctry = "US")
         : BaseTransaction(id, from, to, amt, time, ctry) {}
 
-    bool isSuspicious() const override {
-        return (amount > 10000.0);
-    }
-
+    bool isSuspicious() const override { return (amount > 10000.0); }
     double calculateRiskScore() const override {
         double score = 40.0;
         if (amount > 10000.0) score += 35.0;
         if (amount > 50000.0) score += 20.0;
         return min(100.0, score);
     }
-
     string getRiskCategory() const override {
         return (amount > 10000.0) ? "ELEVATED (BSA CTR / SAR REQUIRED)" : "MODERATE";
     }
-
-    string getTransactionType() const override {
-        return "High-Value Commercial Wire";
-    }
+    string getTransactionType() const override { return "High-Value Commercial Wire"; }
 };
 
 // Derived Class 3: Sanctioned / Blacklisted Entity Transfer (Polymorphism)
@@ -166,22 +145,10 @@ public:
     SanctionedTransaction(string id, string from, string to, double amt, string time, string matchedEntity)
         : BaseTransaction(id, from, to, amt, time, "GLOBAL_WATCHLIST"), matchedWatchlistEntity(matchedEntity) {}
 
-    bool isSuspicious() const override {
-        return true;
-    }
-
-    double calculateRiskScore() const override {
-        return 99.0; // Maximum Critical Risk
-    }
-
-    string getRiskCategory() const override {
-        return "CRITICAL: OFAC SANCTIONS HIT";
-    }
-
-    string getTransactionType() const override {
-        return "Blacklisted Entity Direct Transfer";
-    }
-
+    bool isSuspicious() const override { return true; }
+    double calculateRiskScore() const override { return 99.0; }
+    string getRiskCategory() const override { return "CRITICAL: OFAC SANCTIONS HIT"; }
+    string getTransactionType() const override { return "Blacklisted Entity Direct Transfer"; }
     string getMatchedEntity() const { return matchedWatchlistEntity; }
 };
 
@@ -199,7 +166,7 @@ private:
     string detectionReason;
     string recommendedAction;
     string filingDate;
-    string complianceStatus; // "UNDER_AUDIT", "CLEARED_EMERGENCY", "CONFIRMED_FROZEN"
+    string complianceStatus;
 
 public:
     SARReport(string id, string user, string acc, string rec, double amt, string vType, string reason, string action, string date)
@@ -278,19 +245,18 @@ private:
 
 public:
     SARSystemManager() {
-        // Multi-Customer Dataset (Realistic starting accounts)
+        // Multi-Customer Dataset
         users.emplace("alice", User("alice", "1234", "Alice Sharma", "ACC-789012", 24500.0, "IN"));
         users.emplace("vikram", User("vikram", "1234", "Vikram Malhotra", "ACC-345678", 45000.0, "IN"));
         users.emplace("charlie", User("charlie", "1234", "Charlie Brown", "ACC-901234", 150000.0, "US"));
         users.emplace("diana", User("diana", "1234", "Diana Prince", "ACC-567890", 500000.0, "GB"));
 
-        // Pre-populated transactions including previous historical dataset ($3000, $4500, $12000)
+        // Historical Transactions
         transactions.push_back(make_shared<NormalTransaction>("TXN-101", "Alice Sharma (ACC-789012)", "Retail Grocery Mart", 3000.0, "2026-09-24 14:20", "IN"));
         transactions.push_back(make_shared<NormalTransaction>("TXN-102", "Alice Sharma (ACC-789012)", "Vikram Malhotra (ACC-345678)", 4500.0, "2026-09-24 16:45", "IN"));
         transactions.push_back(make_shared<HighValueTransaction>("TXN-103", "Alice Sharma (ACC-789012)", "Offshore Asset Management", 12000.0, "2026-09-24 19:10", "KY"));
         transactions.push_back(make_shared<SanctionedTransaction>("TXN-104", "Charlie Brown (ACC-901234)", "Darknet-Crypto-Mixer", 8500.0, "2026-09-24 21:05", "Darknet-Crypto-Mixer"));
 
-        // Pre-populate initial SAR reports for existing suspicious transactions
         sarReports.push_back(Analyst::generateSAR(
             ++reportCounter, "alice", "ACC-789012", "Offshore Asset Management", 12000.0,
             "STATUTORY THRESHOLD VIOLATION",
@@ -304,15 +270,6 @@ public:
             "Recipient matched against Global OFAC / UN Specially Designated Nationals (SDN) Watchlist.",
             "CRITICAL: Immediate Hard Freeze & Asset Lock Required under Executive Order 13694."
         ));
-    }
-
-    bool registerNewUser(const string& u, const string& p, const string& name, double bal, const string& ctry) {
-        lock_guard<mutex> lock(mtx);
-        if (users.find(u) != users.end()) return false; // Already exists
-
-        string acc = "ACC-" + to_string(100000 + rand() % 899999);
-        users.emplace(u, User(u, p, name, acc, bal, ctry));
-        return true;
     }
 
     string getInitialStateJSON() {
@@ -337,7 +294,7 @@ public:
 };
 
 // ----------------------------------------------------------------------------
-// 6. EMBEDDED HIGH-TECH BANKING INVESTIGATION INTERFACE (HTML/CSS/JS)
+// 6. MODERN BLUE BANKING UI WITH TOAST NOTIFICATIONS (NO BROWSER POPUPS!)
 // ----------------------------------------------------------------------------
 string buildCompleteWebPage(SARSystemManager& mgr) {
     string stateJson = mgr.getInitialStateJSON();
@@ -355,104 +312,142 @@ string buildCompleteWebPage(SARSystemManager& mgr) {
          << "  <link href='https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap' rel='stylesheet'>\n"
          << "  <style>\n"
          << "    :root {\n"
-         << "      --bg-main: #0b0f19; --bg-card: #121826; --border: #232d42;\n"
-         << "      --text-main: #f8fafc; --text-muted: #94a3b8; --accent-blue: #38bdf8;\n"
-         << "      --danger: #ef4444; --warning: #f59e0b; --success: #10b981;\n"
+         << "      --bg-main: #060b14;\n"
+         << "      --bg-card: #0c1527;\n"
+         << "      --bg-card-sub: #101d36;\n"
+         << "      --border: #1a2c4e;\n"
+         << "      --border-blue: #0284c7;\n"
+         << "      --text-main: #f0f6fc;\n"
+         << "      --text-muted: #8ba2c4;\n"
+         << "      --blue-glow: #38bdf8;\n"
+         << "      --blue-primary: #0284c7;\n"
+         << "      --blue-hover: #0369a1;\n"
+         << "      --blue-card: #132342;\n"
+         << "      --danger: #ef4444;\n"
+         << "      --danger-bg: #2d0b13;\n"
+         << "      --warning: #f59e0b;\n"
+         << "      --success: #10b981;\n"
          << "      --font-sans: 'Plus Jakarta Sans', sans-serif;\n"
          << "      --font-mono: 'JetBrains Mono', monospace;\n"
          << "    }\n"
          << "    * { box-sizing: border-box; margin: 0; padding: 0; }\n"
-         << "    body { background: var(--bg-main); color: var(--text-main); font-family: var(--font-sans); padding: 24px; min-height: 100vh; }\n"
-         << "    .container { max-width: 1100px; margin: 0 auto; }\n"
+         << "    body { background: var(--bg-main); color: var(--text-main); font-family: var(--font-sans); padding: 24px; min-height: 100vh; overflow-x: hidden; }\n"
+         << "    .container { max-width: 1120px; margin: 0 auto; }\n"
          << "    \n"
          << "    /* Header Bar */\n"
-         << "    .navbar { display: flex; justify-content: space-between; align-items: center; padding-bottom: 20px; border-bottom: 1px solid var(--border); margin-bottom: 20px; }\n"
-         << "    .brand-title { font-size: 22px; font-weight: 800; color: var(--accent-blue); display: flex; align-items: center; gap: 10px; }\n"
-         << "    .badge-cpp { background: #1e1b4b; color: #a5b4fc; font-family: var(--font-mono); font-size: 11px; padding: 3px 8px; border-radius: 4px; border: 1px solid #3730a3; }\n"
-         << "    .live-status { display: flex; align-items: center; gap: 8px; background: #111827; padding: 6px 14px; border-radius: 20px; border: 1px solid var(--border); font-size: 13px; }\n"
-         << "    .dot { width: 8px; height: 8px; background: var(--success); border-radius: 50%; box-shadow: 0 0 8px var(--success); animation: pulse 2s infinite; }\n"
-         << "    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }\n"
+         << "    .navbar { display: flex; justify-content: space-between; align-items: center; padding-bottom: 20px; border-bottom: 1px solid var(--border); margin-bottom: 22px; }\n"
+         << "    .brand-title { font-size: 22px; font-weight: 800; color: #38bdf8; display: flex; align-items: center; gap: 10px; letter-spacing: -0.02em; }\n"
+         << "    .badge-cpp { background: #172554; color: #93c5fd; font-family: var(--font-mono); font-size: 11px; padding: 3px 9px; border-radius: 6px; border: 1px solid #1e40af; font-weight: 700; }\n"
+         << "    .live-status { display: flex; align-items: center; gap: 10px; background: #0c1527; padding: 8px 16px; border-radius: 30px; border: 1px solid var(--border); font-size: 13px; }\n"
+         << "    .dot { width: 9px; height: 9px; background: var(--blue-glow); border-radius: 50%; box-shadow: 0 0 10px var(--blue-glow); animation: pulse 1.8s infinite; }\n"
+         << "    @keyframes pulse { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(0.85); } }\n"
          << "    \n"
          << "    /* 4 Navigation Tabs */\n"
-         << "    .tab-bar { display: flex; gap: 8px; background: #0f1523; padding: 6px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 24px; }\n"
-         << "    .tab-btn { flex: 1; padding: 12px 14px; background: transparent; border: none; color: var(--text-muted); font-size: 14px; font-weight: 700; cursor: pointer; border-radius: 8px; transition: all 0.2s; text-align: center; }\n"
-         << "    .tab-btn:hover { color: #fff; background: #1e293b; }\n"
-         << "    .tab-btn.active { background: #0284c7; color: #fff; box-shadow: 0 2px 10px rgba(2, 132, 199, 0.4); }\n"
+         << "    .tab-bar { display: flex; gap: 8px; background: #09101f; padding: 6px; border-radius: 14px; border: 1px solid var(--border); margin-bottom: 24px; }\n"
+         << "    .tab-btn { flex: 1; padding: 13px 16px; background: transparent; border: none; color: var(--text-muted); font-size: 14px; font-weight: 700; cursor: pointer; border-radius: 10px; transition: all 0.2s; text-align: center; display: flex; align-items: center; justify-content: center; gap: 8px; }\n"
+         << "    .tab-btn:hover { color: #fff; background: #132038; }\n"
+         << "    .tab-btn.active { background: linear-gradient(135deg, #0284c7, #0369a1); color: #fff; box-shadow: 0 4px 14px rgba(2, 132, 199, 0.45); }\n"
          << "    \n"
          << "    /* Tab Contents */\n"
-         << "    .tab-pane { display: none; background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; padding: 26px; animation: fadeIn 0.3s ease; }\n"
+         << "    .tab-pane { display: none; background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 28px; animation: fadeIn 0.25s ease; }\n"
          << "    .tab-pane.active { display: block; }\n"
-         << "    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }\n"
+         << "    @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }\n"
          << "    \n"
          << "    /* Grid Layouts & Cards */\n"
-         << "    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }\n"
-         << "    @media (max-width: 850px) { .grid-2 { grid-template-columns: 1fr; } }\n"
-         << "    .card-box { background: #0c121e; border: 1px solid var(--border); border-radius: 10px; padding: 18px; margin-bottom: 16px; }\n"
-         << "    .card-title { font-size: 15px; font-weight: 700; color: #e2e8f0; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }\n"
+         << "    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }\n"
+         << "    @media (max-width: 880px) { .grid-2 { grid-template-columns: 1fr; } }\n"
+         << "    .card-box { background: var(--bg-card-sub); border: 1px solid var(--border); border-radius: 12px; padding: 22px; margin-bottom: 16px; }\n"
+         << "    .card-title { font-size: 15px; font-weight: 800; color: #e2e8f0; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; letter-spacing: -0.01em; }\n"
          << "    \n"
          << "    /* Form Controls */\n"
-         << "    label { display: block; font-size: 12px; font-weight: 700; color: var(--text-muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.04em; }\n"
-         << "    input, select { width: 100%; padding: 11px 14px; background: #070a10; border: 1px solid var(--border); border-radius: 8px; color: #fff; font-size: 14px; margin-bottom: 14px; font-family: var(--font-sans); }\n"
-         << "    input:focus, select:focus { outline: none; border-color: var(--accent-blue); }\n"
-         << "    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 11px 20px; border-radius: 8px; font-weight: 700; font-size: 14px; cursor: pointer; border: none; transition: all 0.2s; font-family: var(--font-sans); }\n"
-         << "    .btn-primary { background: #0284c7; color: #fff; }\n"
-         << "    .btn-primary:hover { background: #0369a1; }\n"
-         << "    .btn-success { background: #059669; color: #fff; }\n"
+         << "    label { display: block; font-size: 11px; font-weight: 700; color: var(--text-muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.05em; }\n"
+         << "    input, select { width: 100%; padding: 12px 14px; background: #070d18; border: 1px solid var(--border); border-radius: 8px; color: #fff; font-size: 14px; margin-bottom: 14px; font-family: var(--font-sans); transition: border-color 0.2s, box-shadow 0.2s; }\n"
+         << "    input:focus, select:focus { outline: none; border-color: var(--blue-glow); box-shadow: 0 0 10px rgba(56, 189, 248, 0.25); }\n"
+         << "    \n"
+         << "    /* Buttons */\n"
+         << "    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 22px; border-radius: 9px; font-weight: 700; font-size: 14px; cursor: pointer; border: none; transition: all 0.2s; font-family: var(--font-sans); }\n"
+         << "    .btn-primary { background: linear-gradient(135deg, #0284c7, #026597); color: #fff; box-shadow: 0 2px 10px rgba(2, 132, 199, 0.3); }\n"
+         << "    .btn-primary:hover { background: linear-gradient(135deg, #0369a1, #075985); transform: translateY(-1px); }\n"
+         << "    .btn-success { background: linear-gradient(135deg, #059669, #047857); color: #fff; }\n"
          << "    .btn-success:hover { background: #047857; }\n"
-         << "    .btn-danger { background: #b91c1c; color: #fff; }\n"
-         << "    .btn-danger:hover { background: #991b1b; }\n"
-         << "    .btn-secondary { background: #1e293b; color: #cbd5e1; border: 1px solid var(--border); }\n"
-         << "    .btn-secondary:hover { background: #334155; }\n"
+         << "    .btn-danger { background: linear-gradient(135deg, #dc2626, #b91c1c); color: #fff; box-shadow: 0 2px 10px rgba(220, 38, 38, 0.3); }\n"
+         << "    .btn-danger:hover { background: #b91c1c; }\n"
+         << "    .btn-secondary { background: #132342; color: #93c5fd; border: 1px solid #1e3a8a; }\n"
+         << "    .btn-secondary:hover { background: #1b315b; color: #fff; }\n"
          << "    .btn-block { width: 100%; }\n"
-         << "    .btn-sm { padding: 6px 12px; font-size: 12px; }\n"
+         << "    .btn-sm { padding: 7px 14px; font-size: 12px; border-radius: 7px; }\n"
          << "    \n"
-         << "    /* Badges & Tables */\n"
+         << "    /* Badges */\n"
          << "    .badge { padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 800; font-family: var(--font-mono); display: inline-block; }\n"
-         << "    .badge-success { background: #064e3b; color: #34d399; }\n"
-         << "    .badge-warning { background: #78350f; color: #fbbf24; }\n"
-         << "    .badge-danger { background: #7f1d1d; color: #fca5a5; }\n"
-         << "    .badge-blue { background: #1e3a8a; color: #93c5fd; }\n"
+         << "    .badge-success { background: #082f49; color: #38bdf8; border: 1px solid #0284c7; }\n"
+         << "    .badge-warning { background: #451a03; color: #fbbf24; border: 1px solid #b45309; }\n"
+         << "    .badge-danger { background: #450a0a; color: #fca5a5; border: 1px solid #ef4444; box-shadow: 0 0 8px rgba(239, 68, 68, 0.4); }\n"
+         << "    .badge-blue { background: #172554; color: #bfdbfe; border: 1px solid #1d4ed8; }\n"
          << "    \n"
+         << "    /* Table */\n"
          << "    table { width: 100%; border-collapse: collapse; font-size: 13px; text-align: left; }\n"
-         << "    th { background: #0a0f18; padding: 10px 12px; color: var(--text-muted); font-size: 11px; text-transform: uppercase; font-weight: 700; border-bottom: 1px solid var(--border); }\n"
-         << "    td { padding: 12px; border-bottom: 1px solid #1a2233; color: #cbd5e1; }\n"
+         << "    th { background: #070d18; padding: 12px 14px; color: var(--text-muted); font-size: 11px; text-transform: uppercase; font-weight: 700; border-bottom: 1px solid var(--border); letter-spacing: 0.05em; }\n"
+         << "    td { padding: 13px 14px; border-bottom: 1px solid #14223d; color: #cbd5e1; }\n"
+         << "    tr:hover td { background: #0e1a31; }\n"
          << "    \n"
          << "    /* Quick User Chips */\n"
-         << "    .quick-users { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }\n"
-         << "    .user-chip { background: #1e293b; border: 1px solid var(--border); padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 12px; transition: all 0.2s; }\n"
-         << "    .user-chip:hover { border-color: var(--accent-blue); background: #273549; }\n"
+         << "    .quick-users { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 18px; }\n"
+         << "    .user-chip { background: #080f1d; border: 1px solid #1b2e50; padding: 10px 14px; border-radius: 9px; cursor: pointer; font-size: 13px; transition: all 0.2s; color: #cbd5e1; display: flex; justify-content: space-between; align-items: center; }\n"
+         << "    .user-chip:hover { border-color: var(--blue-glow); background: #101e38; transform: translateY(-1px); }\n"
+         << "    .user-chip strong { color: #38bdf8; }\n"
          << "    \n"
-         << "    /* Risk Meter Gauge */\n"
-         << "    .gauge-container { background: #080d16; border: 1px solid var(--border); border-radius: 12px; padding: 18px; text-align: center; margin-bottom: 20px; }\n"
-         << "    .gauge-track { height: 16px; background: #1e293b; border-radius: 10px; overflow: hidden; margin: 12px 0; position: relative; }\n"
-         << "    .gauge-fill { height: 100%; width: 15%; background: linear-gradient(90deg, #10b981, #f59e0b, #ef4444); transition: width 0.4s ease; border-radius: 10px; }\n"
-         << "    .gauge-score { font-family: var(--font-mono); font-size: 32px; font-weight: 800; color: #fff; }\n"
+         << "    /* Balance Showcase */\n"
+         << "    .balance-box { background: linear-gradient(135deg, #091a33, #0c2347); border: 1px solid #1d4ed8; padding: 20px; border-radius: 12px; margin-bottom: 18px; box-shadow: 0 4px 20px rgba(2, 132, 199, 0.15); }\n"
+         << "    .balance-val { font-size: 30px; font-weight: 800; font-family: var(--font-mono); color: #38bdf8; text-shadow: 0 0 15px rgba(56, 189, 248, 0.4); margin-top: 4px; }\n"
+         << "    \n"
+         << "    /* Risk Speedometer */\n"
+         << "    .gauge-container { background: #070d18; border: 1px solid var(--border); border-radius: 14px; padding: 22px; text-align: center; margin-bottom: 22px; }\n"
+         << "    .gauge-track { height: 18px; background: #0f1c33; border-radius: 10px; overflow: hidden; margin: 14px 0; border: 1px solid #1a2f54; }\n"
+         << "    .gauge-fill { height: 100%; width: 15%; background: linear-gradient(90deg, #38bdf8, #0284c7, #f59e0b, #ef4444); transition: width 0.4s ease; border-radius: 10px; }\n"
+         << "    .gauge-score { font-family: var(--font-mono); font-size: 34px; font-weight: 800; color: #fff; }\n"
+         << "    \n"
+         << "    /* Floating Toast Notification Center */\n"
+         << "    #toastContainer { position: fixed; top: 24px; right: 24px; z-index: 10000; display: flex; flex-direction: column; gap: 12px; max-width: 420px; width: 100%; pointer-events: none; }\n"
+         << "    .toast-card { pointer-events: auto; background: #091322; border-radius: 12px; padding: 16px 18px; border-left: 5px solid var(--blue-primary); border-top: 1px solid #1a2d4f; border-right: 1px solid #1a2d4f; border-bottom: 1px solid #1a2d4f; box-shadow: 0 10px 30px rgba(0,0,0,0.6); display: flex; gap: 12px; align-items: flex-start; animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1); transition: opacity 0.3s, transform 0.3s; }\n"
+         << "    .toast-card.danger { border-left-color: var(--danger); background: #1c0a10; border-color: #521521; box-shadow: 0 0 20px rgba(239, 68, 68, 0.35); }\n"
+         << "    .toast-card.success { border-left-color: var(--blue-glow); background: #081829; border-color: #133a61; }\n"
+         << "    @keyframes slideIn { from { opacity: 0; transform: translateX(60px); } to { opacity: 1; transform: translateX(0); } }\n"
+         << "    .toast-icon { font-size: 20px; }\n"
+         << "    .toast-content { flex: 1; }\n"
+         << "    .toast-title { font-size: 14px; font-weight: 800; color: #fff; margin-bottom: 2px; }\n"
+         << "    .toast-desc { font-size: 13px; color: var(--text-muted); line-height: 1.4; }\n"
+         << "    .toast-close { background: none; border: none; color: #64748b; font-size: 16px; cursor: pointer; padding: 0 4px; }\n"
+         << "    .toast-close:hover { color: #fff; }\n"
          << "    \n"
          << "    /* Modals */\n"
-         << "    .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(4px); z-index: 1000; align-items: center; justify-content: center; padding: 20px; }\n"
+         << "    .modal { display: none; position: fixed; inset: 0; background: rgba(3, 7, 18, 0.88); backdrop-filter: blur(5px); z-index: 9999; align-items: center; justify-content: center; padding: 20px; }\n"
          << "    .modal.active { display: flex; }\n"
-         << "    .modal-box { background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px; width: 100%; max-width: 580px; padding: 24px; }\n"
+         << "    .modal-box { background: #0c1629; border: 1px solid #1f3763; border-radius: 16px; width: 100%; max-width: 580px; padding: 28px; box-shadow: 0 20px 50px rgba(0,0,0,0.8); }\n"
          << "    \n"
-         << "    .sar-card { background: #0a0e17; border: 1px solid #991b1b; border-left: 6px solid var(--danger); border-radius: 10px; padding: 18px; margin-bottom: 16px; }\n"
-         << "    .sar-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }\n"
-         << "    .sar-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 13px; color: #cbd5e1; margin-bottom: 12px; }\n"
-         << "    .sar-reason { background: #1c1917; border: 1px solid #78350f; color: #fde68a; padding: 10px; border-radius: 6px; font-size: 13px; margin-bottom: 10px; }\n"
-         << "    .sar-action { background: #2e1065; border: 1px solid #6b21a8; color: #e9d5ff; padding: 10px; border-radius: 6px; font-size: 13px; margin-bottom: 12px; font-weight: 600; }\n"
+         << "    /* SAR Cards */\n"
+         << "    .sar-card { background: #091120; border: 1px solid #7f1d1d; border-left: 6px solid var(--danger); border-radius: 12px; padding: 22px; margin-bottom: 18px; }\n"
+         << "    .sar-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }\n"
+         << "    .sar-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 13px; color: #cbd5e1; margin-bottom: 14px; }\n"
+         << "    .sar-reason { background: #18263f; border: 1px solid #233b66; color: #93c5fd; padding: 12px; border-radius: 8px; font-size: 13px; margin-bottom: 10px; }\n"
+         << "    .sar-action { background: #2b0b14; border: 1px solid #7f1d1d; color: #fecdd3; padding: 12px; border-radius: 8px; font-size: 13px; margin-bottom: 14px; font-weight: 700; }\n"
          << "    .sar-btns { display: flex; gap: 10px; flex-wrap: wrap; }\n"
          << "  </style>\n"
          << "</head>\n"
          << "<body>\n"
+         << "  <!-- Toast Notification Mount -->\n"
+         << "  <div id='toastContainer'></div>\n"
+         << "  \n"
          << "  <div class='container'>\n"
          << "    <!-- NAVBAR -->\n"
          << "    <header class='navbar'>\n"
          << "      <div>\n"
          << "        <div class='brand-title'>🛡️ Automated SAR Generation System <span class='badge-cpp'>C++17 OOPS</span></div>\n"
-         << "        <div style='color: var(--text-muted); font-size: 13px; margin-top: 4px;'>Design &amp; Implementation of Banking AML Monitoring &bull; Port 9090</div>\n"
+         << "        <div style='color: var(--text-muted); font-size: 13px; margin-top: 4px;'>Financial Crime AML Intelligence &bull; Winsock2 Port 9090</div>\n"
          << "      </div>\n"
          << "      <div class='live-status'>\n"
          << "        <span class='dot'></span>\n"
-         << "        <span>C++ Engine Active</span>\n"
-         << "        <span style='color:var(--text-muted); font-family:var(--font-mono); margin-left:8px;'>BSA 31 U.S.C. 5318(g)</span>\n"
+         << "        <span style='color:#38bdf8; font-weight:700;'>C++ Core Active</span>\n"
+         << "        <span style='color:var(--text-muted); font-family:var(--font-mono); margin-left:6px;'>BSA 31 U.S.C. 5318(g)</span>\n"
          << "      </div>\n"
          << "    </header>\n"
          << "    \n"
@@ -464,73 +459,71 @@ string buildCompleteWebPage(SARSystemManager& mgr) {
          << "      <button class='tab-btn' onclick=\"switchTab('tabAuditor')\">📑 4. Compliance SAR Reports</button>\n"
          << "    </nav>\n"
          << "    \n"
-         << "    <!-- TAB 1: CUSTOMER PORTAL & DYNAMIC ACCOUNTS -->\n"
+         << "    <!-- TAB 1: CUSTOMER PORTAL -->\n"
          << "    <div id='tabPortal' class='tab-pane active'>\n"
          << "      <div class='grid-2'>\n"
-         << "        <!-- Left: Authentication & Dynamic Registration -->\n"
+         << "        <!-- Left Column: User Authentication -->\n"
          << "        <div class='card-box'>\n"
          << "          <div class='card-title'>\n"
          << "            <span>Authentication (User Entity)</span>\n"
          << "            <button class='btn btn-secondary btn-sm' onclick='toggleAuthMode()' id='authToggleBtn'>+ Create New Account</button>\n"
          << "          </div>\n"
          << "          \n"
-         << "          <!-- Pre-populated Quick Login Chips -->\n"
-         << "          <div style='font-size:12px; color:var(--text-muted); margin-bottom:8px;'>DEMO ONE-CLICK LOGIN:</div>\n"
+         << "          <div style='font-size:11px; font-weight:700; color:var(--text-muted); margin-bottom:8px; text-transform:uppercase;'>Switch Demo Account (1-Click):</div>\n"
          << "          <div class='quick-users'>\n"
-         << "            <div class='user-chip' onclick=\"quickLogin('alice')\">👩 <strong>Alice</strong> ($24.5k)</div>\n"
-         << "            <div class='user-chip' onclick=\"quickLogin('vikram')\">👨 <strong>Vikram</strong> ($45k)</div>\n"
-         << "            <div class='user-chip' onclick=\"quickLogin('charlie')\">🏢 <strong>Charlie</strong> ($150k)</div>\n"
-         << "            <div class='user-chip' onclick=\"quickLogin('diana')\">💎 <strong>Diana</strong> ($500k)</div>\n"
+         << "            <div class='user-chip' onclick=\"quickLogin('alice')\"><span>👩 <strong>Alice</strong></span><span style='font-family:var(--font-mono); font-size:11px;'>$24.5k</span></div>\n"
+         << "            <div class='user-chip' onclick=\"quickLogin('vikram')\"><span>👨 <strong>Vikram</strong></span><span style='font-family:var(--font-mono); font-size:11px;'>$45k</span></div>\n"
+         << "            <div class='user-chip' onclick=\"quickLogin('charlie')\"><span>🏢 <strong>Charlie</strong></span><span style='font-family:var(--font-mono); font-size:11px;'>$150k</span></div>\n"
+         << "            <div class='user-chip' onclick=\"quickLogin('diana')\"><span>💎 <strong>Diana</strong></span><span style='font-family:var(--font-mono); font-size:11px;'>$500k</span></div>\n"
          << "          </div>\n"
          << "          \n"
-         << "          <!-- Login Form -->\n"
          << "          <div id='loginSection'>\n"
          << "            <label>Username:</label>\n"
          << "            <input id='loginUser' placeholder='e.g. alice' value='alice'>\n"
          << "            <label>Password:</label>\n"
          << "            <input id='loginPass' type='password' placeholder='e.g. 1234' value='1234'>\n"
-         << "            <button class='btn btn-primary btn-block' onclick='handleLogin()'>🔑 Secure Login</button>\n"
+         << "            <button class='btn btn-primary btn-block' onclick='handleLogin()'>🔑 Login to Account</button>\n"
          << "          </div>\n"
          << "          \n"
-         << "          <!-- Dynamic Registration Form -->\n"
          << "          <div id='registerSection' style='display:none;'>\n"
          << "            <label>Full Name:</label>\n"
          << "            <input id='regName' placeholder='e.g. Rohit Verma'>\n"
-         << "            <label>Desired Username:</label>\n"
+         << "            <label>Username:</label>\n"
          << "            <input id='regUser' placeholder='e.g. rohit'>\n"
          << "            <label>Password:</label>\n"
          << "            <input id='regPass' type='password' placeholder='••••••••'>\n"
-         << "            <label>Initial Opening Deposit ($):</label>\n"
+         << "            <label>Initial Opening Balance ($):</label>\n"
          << "            <input id='regBal' type='number' placeholder='10000'>\n"
-         << "            <button class='btn btn-success btn-block' onclick='handleRegister()'>✨ Create C++ Account Object</button>\n"
+         << "            <button class='btn btn-primary btn-block' onclick='handleRegister()'>✨ Instantiate C++ Account Object</button>\n"
          << "          </div>\n"
          << "        </div>\n"
          << "        \n"
-         << "        <!-- Right: Logged-in Profile & Fund Transfer -->\n"
+         << "        <!-- Right Column: Profile & Fund Transfer -->\n"
          << "        <div class='card-box'>\n"
          << "          <div class='card-title'>\n"
          << "            <span>Active Customer Profile</span>\n"
          << "            <span id='userStatusBadge' class='badge badge-success'>ACTIVE</span>\n"
          << "          </div>\n"
          << "          \n"
-         << "          <div id='profileDisplay' style='padding: 10px 0;'>\n"
-         << "            <div style='font-size:20px; font-weight:800;' id='dispName'>Alice Sharma</div>\n"
-         << "            <div style='font-family:var(--font-mono); color:var(--text-muted); font-size:13px; margin:4px 0 14px 0;' id='dispAcc'>Account: ACC-789012</div>\n"
-         << "            <div style='background:#070a10; padding:16px; border-radius:8px; border:1px solid var(--border); margin-bottom:16px;'>\n"
-         << "              <div style='font-size:12px; color:var(--text-muted);'>AVAILABLE BALANCE</div>\n"
-         << "              <div style='font-size:28px; font-weight:800; font-family:var(--font-mono); color:#38bdf8;' id='dispBal'>$24,500.00</div>\n"
+         << "          <div id='profileDisplay'>\n"
+         << "            <div style='font-size:22px; font-weight:800; color:#fff;' id='dispName'>Alice Sharma</div>\n"
+         << "            <div style='font-family:var(--font-mono); color:var(--text-muted); font-size:13px; margin:4px 0 16px 0;' id='dispAcc'>Account: ACC-789012 (IN)</div>\n"
+         << "            \n"
+         << "            <div class='balance-box'>\n"
+         << "              <div style='font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase;'>Available Liquidity</div>\n"
+         << "              <div class='balance-val' id='dispBal'>$24,500.00</div>\n"
          << "            </div>\n"
          << "            \n"
          << "            <div class='card-title'>Initiate Fund Transfer</div>\n"
          << "            <label>Transfer Amount ($ USD):</label>\n"
          << "            <input id='transferAmt' type='number' placeholder='e.g. 15000' value='12000' oninput='updateRiskMeter(this.value)'>\n"
-         << "            <label>Select or Enter Recipient:</label>\n"
+         << "            <label>Select Recipient Target:</label>\n"
          << "            <select id='transferRecipient'>\n"
-         << "              <option value='Vikram Malhotra (ACC-345678)'>Vikram Malhotra (ACC-345678) - Domestic</option>\n"
-         << "              <option value='Charlie Brown (ACC-901234)'>Charlie Brown (ACC-901234) - Domestic</option>\n"
-         << "              <option value='Diana Prince (ACC-567890)'>Diana Prince (ACC-567890) - Domestic</option>\n"
+         << "              <option value='Vikram Malhotra (ACC-345678)'>Vikram Malhotra (ACC-345678) - Domestic Verified</option>\n"
+         << "              <option value='Charlie Brown (ACC-901234)'>Charlie Brown (ACC-901234) - Domestic Verified</option>\n"
+         << "              <option value='Diana Prince (ACC-567890)'>Diana Prince (ACC-567890) - Domestic Verified</option>\n"
          << "              <option value='Offshore Asset Management (KY)'>Offshore Asset Management (Cayman Islands)</option>\n"
-         << "              <option value='Darknet-Crypto-Mixer'>Darknet-Crypto-Mixer (⚠️ Sanctions Blacklist)</option>\n"
+         << "              <option value='Darknet-Crypto-Mixer'>Darknet-Crypto-Mixer (⚠️ Sanctions Blacklist Target)</option>\n"
          << "            </select>\n"
          << "            <button class='btn btn-primary btn-block' onclick='executeTransfer()'>⚡ Execute Transaction via OOPS Engine</button>\n"
          << "          </div>\n"
@@ -541,18 +534,17 @@ string buildCompleteWebPage(SARSystemManager& mgr) {
          << "    <!-- TAB 2: TRANSACTION HISTORY LEDGER -->\n"
          << "    <div id='tabLedger' class='tab-pane'>\n"
          << "      <div class='card-title'>\n"
-         << "        <span>Consolidated Banking Audit Ledger (BaseTransaction Polymorphism)</span>\n"
-         << "        <span class='badge badge-blue'>Real-Time State</span>\n"
+         << "        <span>Audit Ledger (BaseTransaction Polymorphism)</span>\n"
+         << "        <span class='badge badge-blue'>Real-Time Stream</span>\n"
          << "      </div>\n"
-         << "      <p style='color:var(--text-muted); font-size:13px; margin-bottom:16px;'>Every transfer passes through polymorphic abstraction (`NormalTransaction`, `HighValueTransaction`, `SanctionedTransaction`).</p>\n"
+         << "      <p style='color:var(--text-muted); font-size:13px; margin-bottom:18px;'>Every transfer is dynamically dispatched through C++ abstract base classes (`NormalTransaction`, `HighValueTransaction`, `SanctionedTransaction`).</p>\n"
          << "      \n"
          << "      <div style='overflow-x:auto;'>\n"
          << "        <table>\n"
          << "          <thead>\n"
-         << "            <tr><th>Txn ID</th><th>Sender &rarr; Recipient</th><th>Amount</th><th>Category / Type</th><th>Timestamp</th><th>Status</th></tr>\n"
+         << "            <tr><th>Txn ID</th><th>Sender &rarr; Recipient</th><th>Amount</th><th>Category</th><th>Timestamp</th><th>Status</th></tr>\n"
          << "          </thead>\n"
          << "          <tbody id='ledgerTableBody'>\n"
-         << "            <!-- Dynamic Table Rows -->\n"
          << "          </tbody>\n"
          << "        </table>\n"
          << "      </div>\n"
@@ -561,38 +553,36 @@ string buildCompleteWebPage(SARSystemManager& mgr) {
          << "    <!-- TAB 3: AML COMPLIANCE RULES & OTP CHALLENGE -->\n"
          << "    <div id='tabRules' class='tab-pane'>\n"
          << "      <div class='grid-2'>\n"
-         << "        <!-- Left: Active Banking Rules -->\n"
          << "        <div>\n"
-         << "          <div class='card-title'>Active Banking Compliance Rules (Analyst Entity)</div>\n"
+         << "          <div class='card-title'>Compliance Rules Engine (Analyst Entity)</div>\n"
          << "          <div class='card-box'>\n"
-         << "            <div style='font-size:14px; font-weight:700; color:#facc15; margin-bottom:4px;'>Rule 1: Statutory BSA Threshold ($10,000)</div>\n"
+         << "            <div style='font-size:14px; font-weight:800; color:#38bdf8; margin-bottom:4px;'>Rule 1: Statutory BSA Threshold ($10,000)</div>\n"
          << "            <div style='font-size:13px; color:var(--text-muted); line-height:1.4;'>Amounts exceeding $10,000 trigger an automated Temporary Safety Hold and require 2FA OTP Step-Up verification.</div>\n"
          << "          </div>\n"
          << "          <div class='card-box'>\n"
-         << "            <div style='font-size:14px; font-weight:700; color:var(--danger); margin-bottom:4px;'>Rule 2: OFAC / UN Sanctions Watchlist</div>\n"
+         << "            <div style='font-size:14px; font-weight:800; color:var(--danger); margin-bottom:4px;'>Rule 2: OFAC / UN Sanctions Watchlist</div>\n"
          << "            <div style='font-size:13px; color:var(--text-muted); line-height:1.4;'>Immediate blocking &amp; SAR filing if recipient matches: <em>Darknet-Crypto-Mixer, Tornado-Cash-Vault, Lazarus-Hacker-Group</em>.</div>\n"
          << "          </div>\n"
          << "          <div class='card-box'>\n"
-         << "            <div style='font-size:14px; font-weight:700; color:#38bdf8; margin-bottom:4px;'>Rule 3: Emergency Exemption Bypass</div>\n"
+         << "            <div style='font-size:14px; font-weight:800; color:#34d399; margin-bottom:4px;'>Rule 3: Emergency Exemption Bypass</div>\n"
          << "            <div style='font-size:13px; color:var(--text-muted); line-height:1.4;'>Legitimate emergencies (Medical, Real Estate) are verified through OTP without freezing customer assets!</div>\n"
          << "          </div>\n"
          << "        </div>\n"
          << "        \n"
-         << "        <!-- Right: Dynamic Risk Speedometer -->\n"
          << "        <div>\n"
          << "          <div class='gauge-container'>\n"
-         << "            <div style='font-size:13px; font-weight:700; color:var(--text-muted);'>LIVE DYNAMIC RISK METER</div>\n"
-         << "            <div class='gauge-score' id='riskScoreText'>45%</div>\n"
+         << "            <div style='font-size:12px; font-weight:700; color:var(--text-muted);'>LIVE DYNAMIC RISK SPEEDOMETER</div>\n"
+         << "            <div class='gauge-score' id='riskScoreText'>75%</div>\n"
          << "            <div class='gauge-track'>\n"
-         << "              <div class='gauge-fill' id='riskGaugeBar' style='width: 45%;'></div>\n"
+         << "              <div class='gauge-fill' id='riskGaugeBar' style='width: 75%;'></div>\n"
          << "            </div>\n"
-         << "            <div id='riskLabel' style='font-size:13px; font-weight:700; color:var(--warning);'>ELEVATED THRESHOLD RISK</div>\n"
+         << "            <div id='riskLabel' style='font-size:13px; font-weight:800; color:var(--danger);'>CRITICAL: STATUTORY SAR REPORT REQUIRED</div>\n"
          << "          </div>\n"
          << "          \n"
          << "          <div class='card-box'>\n"
-         << "            <div class='card-title'>Simulate Emergency Medical Exemption</div>\n"
-         << "            <p style='font-size:13px; color:var(--text-muted); margin-bottom:12px;'>Test what happens when a customer has a genuine $25,000 hospital emergency transfer:</p>\n"
-         << "            <button class='btn btn-warning btn-block' onclick='simulateEmergencyFlow()'>🏥 Test Emergency $25,000 Transfer</button>\n"
+         << "            <div class='card-title'>Simulate Emergency Flow</div>\n"
+         << "            <p style='font-size:13px; color:var(--text-muted); margin-bottom:14px;'>Simulate a customer executing a genuine $25,000 emergency medical transfer without facing a false-positive freeze:</p>\n"
+         << "            <button class='btn btn-secondary btn-block' onclick='simulateEmergencyFlow()'>🏥 Test Emergency $25,000 Transfer</button>\n"
          << "          </div>\n"
          << "        </div>\n"
          << "      </div>\n"
@@ -604,10 +594,9 @@ string buildCompleteWebPage(SARSystemManager& mgr) {
          << "        <span>Regulatory Suspicious Activity Reports (SARReport Entity)</span>\n"
          << "        <span class='badge badge-danger' id='sarCountBadge'>2 ACTIVE REPORTS</span>\n"
          << "      </div>\n"
-         << "      <p style='color:var(--text-muted); font-size:13px; margin-bottom:16px;'>Official SAR filings under 31 U.S.C. 5318(g). Compliance officers can investigate, unfreeze genuine emergencies, or confirm hard freezes.</p>\n"
+         << "      <p style='color:var(--text-muted); font-size:13px; margin-bottom:18px;'>Official regulatory filings under 31 U.S.C. 5318(g). Compliance officers can investigate, unfreeze genuine emergencies, or confirm hard freezes.</p>\n"
          << "      \n"
          << "      <div id='sarReportCardsContainer'>\n"
-         << "        <!-- Dynamic SAR Cards -->\n"
          << "      </div>\n"
          << "    </div>\n"
          << "  </div>\n"
@@ -616,14 +605,14 @@ string buildCompleteWebPage(SARSystemManager& mgr) {
          << "  <div id='otpModal' class='modal'>\n"
          << "    <div class='modal-box'>\n"
          << "      <div style='display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;'>\n"
-         << "        <div style='font-size:18px; font-weight:800; color:#facc15;'>🚨 High-Value Step-Up 2FA Challenge</div>\n"
-         << "        <span class='badge badge-warning'>HOLD ACTIVE</span>\n"
+         << "        <div style='font-size:18px; font-weight:800; color:#38bdf8;'>🚨 High-Value Step-Up 2FA Challenge</div>\n"
+         << "        <span class='badge badge-warning'>SAFETY HOLD</span>\n"
          << "      </div>\n"
-         << "      <p style='font-size:13px; color:#cbd5e1; margin-bottom:14px;'>This transfer exceeds the statutory $10,000 threshold. To prevent freezing your account, please enter the security OTP sent to your registered device:</p>\n"
+         << "      <p style='font-size:13px; color:#cbd5e1; margin-bottom:14px; line-height:1.4;'>This transfer exceeds the statutory $10,000 threshold. To verify this is not a fraudulent drain, please enter the security OTP:</p>\n"
          << "      \n"
-         << "      <div style='background:#070a10; padding:12px; border-radius:8px; border:1px solid var(--border); margin-bottom:14px;'>\n"
-         << "        <div style='font-size:12px; color:var(--text-muted);'>TEST SIMULATION OTP:</div>\n"
-         << "        <div style='font-family:var(--font-mono); font-size:22px; font-weight:800; color:var(--success); letter-spacing:4px;'>849201</div>\n"
+         << "      <div style='background:#070d18; padding:14px; border-radius:10px; border:1px solid #1e3a8a; margin-bottom:14px; text-align:center;'>\n"
+         << "        <div style='font-size:11px; font-weight:700; color:var(--text-muted);'>TEST DEMO OTP:</div>\n"
+         << "        <div style='font-family:var(--font-mono); font-size:26px; font-weight:800; color:#38bdf8; letter-spacing:6px;'>849201</div>\n"
          << "      </div>\n"
          << "      \n"
          << "      <label>Enter 6-Digit OTP:</label>\n"
@@ -635,21 +624,47 @@ string buildCompleteWebPage(SARSystemManager& mgr) {
          << "        <option value='Authorized Corporate Payroll'>💼 Corporate Employee Payroll</option>\n"
          << "      </select>\n"
          << "      \n"
-         << "      <div style='display:flex; gap:10px; margin-top:14px;'>\n"
-         << "        <button class='btn btn-success' style='flex:1;' onclick='submitOtpVerification(true)'>✅ Verify &amp; Release Hold</button>\n"
-         << "        <button class='btn btn-danger' style='flex:1;' onclick='submitOtpVerification(false)'>❌ Abort / Lock Account</button>\n"
+         << "      <div style='display:flex; gap:12px; margin-top:16px;'>\n"
+         << "        <button class='btn btn-primary' style='flex:1;' onclick='submitOtpVerification(true)'>✅ Verify &amp; Release Hold</button>\n"
+         << "        <button class='btn btn-danger' style='flex:1;' onclick='submitOtpVerification(false)'>❌ Abort &amp; Lock Account</button>\n"
          << "      </div>\n"
          << "    </div>\n"
          << "  </div>\n"
          << "  \n"
          << "  <!-- JAVASCRIPT LOGIC -->\n"
          << "  <script>\n"
-         << "    // Initial C++ State Injected\n"
          << "    const systemState = " << stateJson << ";\n"
          << "    \n"
          << "    let currentUsername = 'alice';\n"
          << "    let pendingTransferObj = null;\n"
          << "    let isRegisterMode = false;\n"
+         << "    \n"
+         << "    // Modern Toast Notification Function (Replaces annoying browser alert dialogs!)\n"
+         << "    function showToast(title, message, type = 'info') {\n"
+         << "      const container = document.getElementById('toastContainer');\n"
+         << "      const toast = document.createElement('div');\n"
+         << "      toast.className = 'toast-card ' + type;\n"
+         << "      \n"
+         << "      let icon = 'ℹ️';\n"
+         << "      if (type === 'success') icon = '✅';\n"
+         << "      if (type === 'danger') icon = '🚨';\n"
+         << "      if (type === 'warning') icon = '⚠️';\n"
+         << "      \n"
+         << "      toast.innerHTML = '<div class=\"toast-icon\">' + icon + '</div>' +\n"
+         << "                        '<div class=\"toast-content\">' +\n"
+         << "                        '  <div class=\"toast-title\">' + title + '</div>' +\n"
+         << "                        '  <div class=\"toast-desc\">' + message + '</div>' +\n"
+         << "                        '</div>' +\n"
+         << "                        '<button class=\"toast-close\" onclick=\"this.parentElement.remove()\">&times;</button>';\n"
+         << "      \n"
+         << "      container.appendChild(toast);\n"
+         << "      \n"
+         << "      setTimeout(() => {\n"
+         << "        toast.style.opacity = '0';\n"
+         << "        toast.style.transform = 'translateX(50px)';\n"
+         << "        setTimeout(() => toast.remove(), 300);\n"
+         << "      }, 4000);\n"
+         << "    }\n"
          << "    \n"
          << "    let transactionsList = [\n"
          << "      { id: 'TXN-101', sender: 'Alice Sharma (ACC-789012)', recipient: 'Retail Grocery Mart', amount: 3000, type: 'Standard Domestic', time: '2026-09-24 14:20', status: 'CLEARED' },\n"
@@ -689,6 +704,7 @@ string buildCompleteWebPage(SARSystemManager& mgr) {
          << "      refreshProfile();\n"
          << "      renderLedger();\n"
          << "      renderSARs();\n"
+         << "      showToast('System Online', 'Connected to C++ Winsock2 Engine on port 9090', 'info');\n"
          << "    });\n"
          << "    \n"
          << "    function switchTab(tabId) {\n"
@@ -710,6 +726,8 @@ string buildCompleteWebPage(SARSystemManager& mgr) {
          << "    function quickLogin(u) {\n"
          << "      currentUsername = u;\n"
          << "      refreshProfile();\n"
+         << "      let userObj = systemState.users.find(x => x.username.toLowerCase() === u.toLowerCase());\n"
+         << "      showToast('Switched Account', 'Active profile set to ' + userObj.name, 'info');\n"
          << "    }\n"
          << "    \n"
          << "    function handleLogin() {\n"
@@ -718,9 +736,9 @@ string buildCompleteWebPage(SARSystemManager& mgr) {
          << "      if (userObj) {\n"
          << "        currentUsername = userObj.username;\n"
          << "        refreshProfile();\n"
-         << "        alert('Welcome back, ' + userObj.name + '!');\n"
+         << "        showToast('Login Successful', 'Welcome back, ' + userObj.name + '!', 'success');\n"
          << "      } else {\n"
-         << "        alert('User not found. You can click \"+ Create New Account\" to register instantly!');\n"
+         << "        showToast('Authentication Failed', 'User not found. Try Alice or Vikram.', 'danger');\n"
          << "      }\n"
          << "    }\n"
          << "    \n"
@@ -731,7 +749,7 @@ string buildCompleteWebPage(SARSystemManager& mgr) {
          << "      let bal = parseFloat(document.getElementById('regBal').value);\n"
          << "      \n"
          << "      if (!name || !u || !p || isNaN(bal)) {\n"
-         << "        alert('Please fill out all registration fields.');\n"
+         << "        showToast('Form Incomplete', 'Please fill out all registration fields.', 'warning');\n"
          << "        return;\n"
          << "      }\n"
          << "      \n"
@@ -742,7 +760,7 @@ string buildCompleteWebPage(SARSystemManager& mgr) {
          << "      \n"
          << "      toggleAuthMode();\n"
          << "      refreshProfile();\n"
-         << "      alert('Account Successfully Created in C++ Memory! Account #: ' + newAcc);\n"
+         << "      showToast('Account Created!', 'Instantiated User object in C++ memory. Account: ' + newAcc, 'success');\n"
          << "    }\n"
          << "    \n"
          << "    function refreshProfile() {\n"
@@ -780,22 +798,22 @@ string buildCompleteWebPage(SARSystemManager& mgr) {
          << "        lbl.style.color = 'var(--warning)';\n"
          << "      } else {\n"
          << "        lbl.textContent = 'NORMAL ROUTINE TRANSACTION';\n"
-         << "        lbl.style.color = 'var(--success)';\n"
+         << "        lbl.style.color = 'var(--blue-glow)';\n"
          << "      }\n"
          << "    }\n"
          << "    \n"
          << "    function executeTransfer() {\n"
          << "      let u = systemState.users.find(x => x.username === currentUsername);\n"
          << "      if (u.status === 'FROZEN') {\n"
-         << "        alert('❌ TRANSACTION BLOCKED: Your account is FROZEN under Bank Secrecy Act Section 5318(g).');\n"
+         << "        showToast('Transfer Blocked', 'Account is FROZEN under Bank Secrecy Act Section 5318(g).', 'danger');\n"
          << "        return;\n"
          << "      }\n"
          << "      \n"
          << "      let amt = parseFloat(document.getElementById('transferAmt').value);\n"
          << "      let recipient = document.getElementById('transferRecipient').value;\n"
          << "      \n"
-         << "      if (isNaN(amt) || amt <= 0) { alert('Enter a valid amount'); return; }\n"
-         << "      if (amt > u.balance) { alert('Insufficient account balance!'); return; }\n"
+         << "      if (isNaN(amt) || amt <= 0) { showToast('Invalid Input', 'Enter a positive amount', 'warning'); return; }\n"
+         << "      if (amt > u.balance) { showToast('Insufficient Funds', 'Transfer amount exceeds current balance.', 'warning'); return; }\n"
          << "      \n"
          << "      // 1. Check Sanctions Blacklist\n"
          << "      if (recipient.includes('Darknet') || recipient.includes('Tornado')) {\n"
@@ -829,7 +847,7 @@ string buildCompleteWebPage(SARSystemManager& mgr) {
          << "        renderLedger();\n"
          << "        renderSARs();\n"
          << "        switchTab('tabAuditor');\n"
-         << "        alert('🚫 SANCTIONS VIOLATION! Recipient is on Federal Watchlist. Transfer Blocked & Account Frozen!');\n"
+         << "        showToast('🚫 SANCTIONS VIOLATION', 'Recipient is on Federal Watchlist! Transfer Blocked & Account Frozen.', 'danger');\n"
          << "        return;\n"
          << "      }\n"
          << "      \n"
@@ -839,6 +857,7 @@ string buildCompleteWebPage(SARSystemManager& mgr) {
          << "        u.status = 'TEMPORARY_HOLD';\n"
          << "        refreshProfile();\n"
          << "        document.getElementById('otpModal').classList.add('active');\n"
+         << "        showToast('2FA Challenge', 'High-value transfer placed on temporary safety hold.', 'warning');\n"
          << "        return;\n"
          << "      }\n"
          << "      \n"
@@ -855,7 +874,7 @@ string buildCompleteWebPage(SARSystemManager& mgr) {
          << "        status: 'CLEARED'\n"
          << "      });\n"
          << "      renderLedger();\n"
-         << "      alert('✅ Transfer Cleared: $' + amt.toLocaleString() + ' successfully sent to ' + recipient);\n"
+         << "      showToast('Transfer Cleared', '$' + amt.toLocaleString() + ' sent to ' + recipient, 'success');\n"
          << "    }\n"
          << "    \n"
          << "    function submitOtpVerification(isApproved) {\n"
@@ -869,7 +888,6 @@ string buildCompleteWebPage(SARSystemManager& mgr) {
          << "      let otpInput = document.getElementById('inputOtp').value.trim();\n"
          << "      \n"
          << "      if (isApproved && otpInput === '849201') {\n"
-         << "        // Emergency Approved & Released!\n"
          << "        u.status = 'ACTIVE';\n"
          << "        u.balance -= amt;\n"
          << "        refreshProfile();\n"
@@ -884,9 +902,8 @@ string buildCompleteWebPage(SARSystemManager& mgr) {
          << "          status: 'CLEARED_EXEMPTION'\n"
          << "        });\n"
          << "        renderLedger();\n"
-         << "        alert('🎉 2FA OTP Verified! Emergency Purpose Logged: \"' + purpose + '\". Account released from hold and $' + amt.toLocaleString() + ' transferred successfully.');\n"
+         << "        showToast('Hold Released & Cleared', 'Emergency verified: \"' + purpose + '\". Funds transferred.', 'success');\n"
          << "      } else {\n"
-         << "        // Failed / Aborted -> Hard SAR Filing & Freeze\n"
          << "        u.status = 'FROZEN';\n"
          << "        refreshProfile();\n"
          << "        \n"
@@ -905,7 +922,7 @@ string buildCompleteWebPage(SARSystemManager& mgr) {
          << "        });\n"
          << "        renderSARs();\n"
          << "        switchTab('tabAuditor');\n"
-         << "        alert('🚨 VERIFICATION FAILED! Account Hard-Frozen and Regulatory SAR filed in Tab 4.');\n"
+         << "        showToast('🚨 Verification Failed', 'Account Hard-Frozen & Regulatory SAR filed in Tab 4.', 'danger');\n"
          << "      }\n"
          << "      pendingTransferObj = null;\n"
          << "    }\n"
@@ -914,7 +931,7 @@ string buildCompleteWebPage(SARSystemManager& mgr) {
          << "      switchTab('tabPortal');\n"
          << "      document.getElementById('transferAmt').value = '25000';\n"
          << "      updateRiskMeter(25000);\n"
-         << "      alert('Now click \"Execute Transaction via OOPS Engine\" to see how the emergency OTP modal prevents freezing genuine customers!');\n"
+         << "      showToast('Emergency Simulation', 'Amount set to $25,000. Click Execute Transaction to test 2FA!', 'info');\n"
          << "    }\n"
          << "    \n"
          << "    function renderLedger() {\n"
@@ -977,7 +994,7 @@ string buildCompleteWebPage(SARSystemManager& mgr) {
          << "      sarReportsList[idx].status = 'CLEARED_EMERGENCY';\n"
          << "      sarReportsList[idx].action = '✅ Hold Released by Compliance Officer. Customer Verified.';\n"
          << "      renderSARs();\n"
-         << "      alert('✅ Hold Released! Account for ' + userName + ' is now restored to ACTIVE status.');\n"
+         << "      showToast('Hold Released', 'Account for ' + userName + ' is now restored to ACTIVE status.', 'success');\n"
          << "    }\n"
          << "    \n"
          << "    function confirmHardFreeze(userName, idx) {\n"
@@ -986,7 +1003,7 @@ string buildCompleteWebPage(SARSystemManager& mgr) {
          << "      sarReportsList[idx].status = 'CONFIRMED_FROZEN';\n"
          << "      sarReportsList[idx].action = '🔒 Confirmed Hard Freeze under BSA Section 5318(g). Asset locked.';\n"
          << "      renderSARs();\n"
-         << "      alert('🔒 Hard Freeze Confirmed! Account assets locked down.');\n"
+         << "      showToast('Hard Freeze Confirmed', 'Account assets locked down under BSA Section 5318(g).', 'danger');\n"
          << "    }\n"
          << "    \n"
          << "    function downloadReportText(idx) {\n"
@@ -1014,6 +1031,7 @@ string buildCompleteWebPage(SARSystemManager& mgr) {
          << "      a.download = rep.id + '_FinCEN_SAR.txt';\n"
          << "      a.click();\n"
          << "      URL.revokeObjectURL(url);\n"
+         << "      showToast('Downloaded SAR Filing', 'Saved ' + rep.id + '_FinCEN_SAR.txt to your device.', 'success');\n"
          << "    }\n"
          << "  </script>\n"
          << "</body>\n"
@@ -1070,11 +1088,7 @@ int main() {
     cout << "  Design & Implementation of Automated SAR Generation System (OOPS)\n";
     cout << "===================================================================\n";
     cout << "[+] Server running at http://localhost:9090\n";
-    cout << "[+] Features Active:\n";
-    cout << "    1. Multi-Customer Dataset & Dynamic Registration (User Entity)\n";
-    cout << "    2. Real-Time Transaction Ledger (BaseTransaction Polymorphism)\n";
-    cout << "    3. AML Rules, Sanctions Watchlist & Emergency OTP Step-Up\n";
-    cout << "    4. SAR Reports, Compliance Override (Unfreeze) & .txt Download\n";
+    cout << "[+] Modern Blue Banking UI Active (No Browser Dialogs!)\n";
     cout << "===================================================================\n";
 
     while (true) {
