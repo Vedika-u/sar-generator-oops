@@ -1,117 +1,55 @@
-# Automated SAR Generation System Using OOPS
+# Automated Suspicious Activity Report (SAR) System 🛡️
 
-## Introduction
+A high-performance financial telemetry and risk evaluation engine built from scratch in **modern C++** using **Object-Oriented Programming (OOP)** and low-level **Winsock2 TCP socket networking**.
 
-The **Automated Suspicious Activity Reporting (SAR) System** is a
-banking monitoring application developed using **C++ and Object-Oriented
-Programming (OOPS)** principles.
+The system ingests banking transactions, calculates risk scores through polymorphic classification rules, flags anomalous financial behavior, and serves an interactive real-time monitoring dashboard over a custom multi-threaded HTTP server.
 
-The system analyzes transaction data and automatically generates
-**Suspicious Activity Reports (SAR)** based on predefined rules such as
-large transaction amounts and unusual transaction times.
+---
 
-It also includes a lightweight **HTTP server** that serves a web
-interface where users can log in, analyze transactions, and view
-reports.
+## 🚀 Key Features
 
-------------------------------------------------------------------------
+* **Polymorphic Rule Engine:** Evaluates domestic transfers and international wire events using custom risk-scoring algorithms (unusual nocturnal hours, anomalous volumes, threshold spikes).
+* **Zero-Dependency HTTP Server:** Custom web server implemented in C++ using the **Windows Sockets API (Winsock2)**, supporting concurrent client connections via std::thread.
+* **Clean Object-Oriented Architecture:**
+  * **Abstraction & Polymorphism:** Abstract base class BaseTransaction with virtual methods (calculateRiskScore(), getRiskCategory()).
+  * **Inheritance:** Derived DomesticTransaction and InternationalWireTransaction implementations.
+  * **Encapsulation & Memory Safety:** Thread-safe TransactionManager leveraging modern C++ smart pointers (std::shared_ptr) and mutex locks.
+* **Real-time Web Dashboard:** Serves an embedded, dark-themed responsive telemetry dashboard directly on http://localhost:9090.
 
-## Features
+---
 
--   Automated SAR generation based on transaction rules
--   Web-based dashboard for user interaction
--   Transaction history display
--   Risk score calculation
--   Implementation of core OOPS concepts
--   Simple HTTP server built with Winsock
--   Lightweight single-file implementation
+## 🛠️ Tech Stack & Concepts
 
-------------------------------------------------------------------------
+* **Language:** C++ (C++17 standard)
+* **Networking & Sockets:** Winsock2 (ws2_32.lib), TCP/IP Sockets, HTTP/1.1
+* **Concurrency:** std::thread, std::mutex, std::lock_guard
+* **Design Patterns:** Object-Oriented Design (OOP), Factory / Smart Pointer resource management
 
-## Technologies Used
+---
 
--   C++
--   Object-Oriented Programming (OOPS)
--   Winsock2 (Windows Socket API)
--   HTML / CSS / JavaScript
+## ⚙️ Compilation & Execution
 
-------------------------------------------------------------------------
+### 1. Prerequisites
+* Windows OS
+* MinGW / GCC (g++) or MSVC with C++17 support
 
-## OOPS Concepts Used
+### 2. Compile
+`ash
+g++ -std=c++17 sar_system.cpp -lws2_32 -o sar_system.exe
+`
 
--   **Class & Object**
--   **Encapsulation**
--   **Abstraction**
--   **Modularity**
+### 3. Run
+`ash
+./sar_system.exe
+`
 
-Main Classes: - Transaction - TransactionManager - SARAnalyzer -
-PageBuilder - HTTPServer
+### 4. View Live Dashboard
+Open your browser and navigate to:
+`
+http://localhost:9090
+`
 
-------------------------------------------------------------------------
+---
 
-## Installation
-
-### Requirements
-
--   Windows OS
--   C++ Compiler (MinGW or Visual Studio)
-
-### Compile
-
-`g++ sar_system.cpp -lws2_32 -o sar_system`
-
-### Run
-
-`sar_system.exe`
-
-------------------------------------------------------------------------
-
-## Usage
-
-1.  Start the program.
-2.  Open a browser and go to:
-
-`http://localhost:9090`
-
-3.  Login using demo credentials:
-
-| Username | Password |
-|----------|----------|
-| kanchan  | 1234     |
-| vedika   | 5678     |
-
-4.  Use the dashboard to:
-
--   Generate SAR reports
--   View generated reports
--   View transaction history
-
-------------------------------------------------------------------------
-
-## SAR Detection Rules
-
--   Amount \> 10,000 → Large transaction
--   Amount \> 20,000 → Very high risk transaction
--   Time between 22:00 -- 05:00 → Unusual late-night activity
-
-Each rule contributes to a **risk score out of 100**.
-
-------------------------------------------------------------------------
-
-## Project Structure
-
-Single file project:
-
-`sar_system.cpp`
-
-------------------------------------------------------------------------
-
-## Contributors
-
-| Name | Roll Number |
-|-----|-------------|
-| Vedika Utturwar | 241H0360126 |
-| Kanchan | 241H0360059 |
-| Vaibhavi Ahuja | 241H0360117 |
-
-------------------------------------------------------------------------
+## 👤 Author
+* **Vedika Utturwar** — [GitHub](https://github.com/Vedika-u) | [LinkedIn](https://www.linkedin.com/in/vedika-utturwar-b37b75336)
