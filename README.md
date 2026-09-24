@@ -1,55 +1,98 @@
-# Automated Suspicious Activity Report (SAR) System 🛡️
+# Design and Implementation of an Automated SAR Generation System Using OOPS
 
-A high-performance financial telemetry and risk evaluation engine built from scratch in **modern C++** using **Object-Oriented Programming (OOP)** and low-level **Winsock2 TCP socket networking**.
+[![C++17](https://img.shields.io/badge/Language-C%2B%2B17-00599C?logo=c%2B%2B&logoColor=white)](https://isocpp.org/)
+[![Networking](https://img.shields.io/badge/Networking-Winsock2%20Sockets-blue)](https://learn.microsoft.com/en-us/windows/win32/winsock/windows-sockets-start-page-2)
+[![Port](https://img.shields.io/badge/Port-9090-brightgreen)](http://localhost:9090)
+[![Compliance](https://img.shields.io/badge/Compliance-FinCEN%20BSA%20SAR-orange)](https://www.fincen.gov/)
+[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-The system ingests banking transactions, calculates risk scores through polymorphic classification rules, flags anomalous financial behavior, and serves an interactive real-time monitoring dashboard over a custom multi-threaded HTTP server.
-
----
-
-## 🚀 Key Features
-
-* **Polymorphic Rule Engine:** Evaluates domestic transfers and international wire events using custom risk-scoring algorithms (unusual nocturnal hours, anomalous volumes, threshold spikes).
-* **Zero-Dependency HTTP Server:** Custom web server implemented in C++ using the **Windows Sockets API (Winsock2)**, supporting concurrent client connections via std::thread.
-* **Clean Object-Oriented Architecture:**
-  * **Abstraction & Polymorphism:** Abstract base class BaseTransaction with virtual methods (calculateRiskScore(), getRiskCategory()).
-  * **Inheritance:** Derived DomesticTransaction and InternationalWireTransaction implementations.
-  * **Encapsulation & Memory Safety:** Thread-safe TransactionManager leveraging modern C++ smart pointers (std::shared_ptr) and mutex locks.
-* **Real-time Web Dashboard:** Serves an embedded, dark-themed responsive telemetry dashboard directly on http://localhost:9090.
+An automated Suspicious Activity Reporting (SAR) monitoring and compliance system implemented entirely in **C++** using **Object-Oriented Programming (OOP)** principles and native **Winsock2** network sockets.
 
 ---
 
-## 🛠️ Tech Stack & Concepts
+## 📌 Abstract
 
-* **Language:** C++ (C++17 standard)
-* **Networking & Sockets:** Winsock2 (ws2_32.lib), TCP/IP Sockets, HTTP/1.1
-* **Concurrency:** std::thread, std::mutex, std::lock_guard
-* **Design Patterns:** Object-Oriented Design (OOP), Factory / Smart Pointer resource management
+Suspicious Activity Reporting (SAR) is an important process in the banking sector to identify and report potentially fraudulent or illegal transactions. However, preparing SAR reports manually is time-consuming, error-prone, and requires significant human effort.
+
+This project proposes an **Automated Suspicious Activity Reporting System based on Object-Oriented Programming (OOPS) principles**. The system collects transaction details, analyzes them using predefined rules, and automatically generates structured SAR reports.
+
+Core OOPS concepts such as **class and object, encapsulation, abstraction, inheritance, and polymorphism** are used to model real-world entities like **users, transactions, analysts, and reports**. The system ensures data security, modularity, and easy extensibility.
+
+The proposed solution reduces manual workload, improves reporting accuracy, and provides a scalable approach for handling large volumes of banking transactions.
 
 ---
 
-## ⚙️ Compilation & Execution
+## 🏛️ Mapping Real-World Entities to Core OOPS Concepts
 
-### 1. Prerequisites
+The system architecture cleanly maps the banking problem domain into 4 core entities:
+
+| Entity | OOPS Concept Demonstrated | Implementation in C++ |
+| :--- | :--- | :--- |
+| **1. User** | **Class, Object & Encapsulation** | `User` class with private credentials (`username`, `password`, `accountNumber`, `accountBalance`). Secure authentication methods. |
+| **2. Transaction** | **Abstraction & Polymorphism** | Abstract base class `BaseTransaction` with pure virtual methods `isSuspicious()`, `getRiskCategory()`. Derived classes `NormalTransaction` and `SuspiciousTransaction` override behavior polymorphically. |
+| **3. Analyst** | **Rule Engine & Decision Logic** | `Analyst` class encapsulating AML regulatory rules (e.g. Bank Secrecy Act statutory threshold of \$10,000) and generating structured SAR filings. |
+| **4. Report** | **Data Modeling & Immutability** | `SARReport` class encapsulating official regulatory report fields: Report ID, Suspect Account, Flagged Amount, Reason, Recommended Action ("Freeze Account & Verify Identity"), and Timestamp. |
+
+---
+
+## 🖥️ System Interface (4 Switchable Tabs)
+
+The C++ Winsock web server serves an interactive, responsive dashboard accessible on **`http://localhost:9090`** featuring 4 seamless switchable tabs:
+
+1. **👤 1. Customer Login (User Entity):**
+   * Secure user authentication module.
+   * Pre-configured test accounts: `alice` (pass: `1234`) and `bob` (pass: `5678`).
+   * Displays account balance and account routing number upon successful login.
+
+2. **💳 2. Transaction History (Transaction Entity):**
+   * Displays previous transactions stored in C++ memory (including initial records: \$3,000, \$4,500, and \$12,000).
+   * Status indicators for cleared vs. flagged transactions.
+
+3. **🔍 3. AML Analyst & Rules (Analyst Entity):**
+   * Predefined regulatory rule evaluation.
+   * Interactive input form to enter transaction amounts and test AML detection rules in real-time.
+   * Amounts $> \$10,000$ automatically trigger regulatory alerts.
+
+4. **📑 4. Generated SAR Reports (Report Entity):**
+   * Lists generated formal Suspicious Activity Reports.
+   * Displays detailed justification, flagged sums, legal regulatory reference (31 U.S.C. 5318(g)), and compliance recommended actions (*"Freeze Account & Verify Identity"*).
+
+---
+
+## 🚀 How to Run & Test
+
+### Prerequisites
 * Windows OS
-* MinGW / GCC (g++) or MSVC with C++17 support
+* `g++` (MinGW / MSYS2 / GCC) with C++17 support
 
-### 2. Compile
-`ash
-g++ -std=c++17 sar_system.cpp -lws2_32 -o sar_system.exe
-`
+### Step-by-Step Execution
 
-### 3. Run
-`ash
-./sar_system.exe
-`
+1. **Open Terminal / Command Prompt in project directory:**
+   ```powershell
+   cd sar-generator-oops
+   ```
 
-### 4. View Live Dashboard
-Open your browser and navigate to:
-`
-http://localhost:9090
-`
+2. **Compile the C++ Single-File Code:**
+   ```powershell
+   g++ -std=c++17 sar_system.cpp -lws2_32 -o sar_system.exe
+   ```
+
+3. **Run the Binary:**
+   ```powershell
+   .\sar_system.exe
+   ```
+
+4. **Open in Browser:**
+   Navigate to: **[http://localhost:9090](http://localhost:9090)**
+
+5. **Stop Server:**
+   Press `Ctrl + C` in the terminal when done.
 
 ---
 
-## 👤 Author
-* **Vedika Utturwar** — [GitHub](https://github.com/Vedika-u) | [LinkedIn](https://www.linkedin.com/in/vedika-utturwar-b37b75336)
+## 👩‍💻 Author
+
+**Vedika Utturwar**  
+* B.Tech Information Technology, Banasthali Vidyapith (9.61 CGPA)
+* Focus: C++, Object-Oriented Design, High-Performance Systems
+* [GitHub Profile](https://github.com/Vedika-u)

@@ -6,139 +6,190 @@
 #include <sstream>
 #include <memory>
 #include <iomanip>
-#include <thread>
 #include <mutex>
 
 #pragma comment(lib, "ws2_32.lib")
 
 using namespace std;
 
-// ============================================================
-// 1. ABSTRACT BASE CLASS: BaseTransaction (Demonstrates Abstraction & Polymorphism)
-// ============================================================
-class BaseTransaction {
-protected:
-    string id;
-    string type;
-    double amount;
-    int hour; // 0-23
-    string sender;
-    string recipient;
+// ============================================================================
+// PROJECT: Design and Implementation of an Automated SAR Generation System Using OOPS
+// CORE OOPS ENTITIES:
+//   1. User (Class & Object, Encapsulation)
+//   2. BaseTransaction / Derived Classes (Abstraction, Inheritance, Polymorphism)
+//   3. Analyst (Rule Engine & Decision Logic)
+//   4. SARReport (Structured Reporting Entity)
+// ============================================================================
+
+// ----------------------------------------------------------------------------
+// 1. ENTITY: User (Demonstrates Class, Object, & Encapsulation)
+// ----------------------------------------------------------------------------
+class User {
+private:
+    string username;
+    string password;
+    string accountNumber;
+    double accountBalance;
 
 public:
-    BaseTransaction(string id, string type, double amount, int hour, string sender, string recipient)
-        : id(id), type(type), amount(amount), hour(hour), sender(sender), recipient(recipient) {}
+    User(string u, string p, string acc, double bal)
+        : username(u), password(p), accountNumber(acc), accountBalance(bal) {}
+
+    bool authenticate(const string& u, const string& p) const {
+        return (username == u && password == p);
+    }
+
+    string getUsername() const { return username; }
+    string getAccountNumber() const { return accountNumber; }
+    double getBalance() const { return accountBalance; }
+
+    void deductBalance(double amt) { accountBalance -= amt; }
+    void addBalance(double amt) { accountBalance += amt; }
+};
+
+// ----------------------------------------------------------------------------
+// 2. ENTITY: BaseTransaction (Demonstrates Abstraction & Polymorphism)
+// ----------------------------------------------------------------------------
+class BaseTransaction {
+protected:
+    string txnId;
+    string sender;
+    string recipient;
+    double amount;
+    string timestamp;
+
+public:
+    BaseTransaction(string id, string from, string to, double amt, string time)
+        : txnId(id), sender(from), recipient(to), amount(amt), timestamp(time) {}
 
     virtual ~BaseTransaction() = default;
 
-    virtual double calculateRiskScore() const = 0;
+    // Pure virtual functions (Abstraction)
+    virtual bool isSuspicious() const = 0;
     virtual string getRiskCategory() const = 0;
+    virtual string getTransactionType() const = 0;
 
-    string getId() const { return id; }
-    string getType() const { return type; }
-    double getAmount() const { return amount; }
-    int getHour() const { return hour; }
+    string getId() const { return txnId; }
     string getSender() const { return sender; }
     string getRecipient() const { return recipient; }
-
-    virtual string toHTMLRow() const {
-        double risk = calculateRiskScore();
-        string badgeClass = (risk >= 70) ? "badge-danger" : ((risk >= 40) ? "badge-warning" : "badge-success");
-        stringstream ss;
-        ss << fixed << setprecision(2) << amount;
-        return "<tr>"
-               "<td>" + id + "</td>"
-               "<td>" + type + "</td>"
-               "<td>$" + ss.str() + "</td>"
-               "<td>" + to_string(hour) + ":00</td>"
-               "<td>" + sender + " &rarr; " + recipient + "</td>"
-               "<td><span class='badge " + badgeClass + "'>" + to_string((int)risk) + "% (" + getRiskCategory() + ")</span></td>"
-               "</tr>";
-    }
+    double getAmount() const { return amount; }
+    string getTimestamp() const { return timestamp; }
 };
 
-// ============================================================
-// 2. DERIVED CLASS: DomesticTransaction (Demonstrates Inheritance)
-// ============================================================
-class DomesticTransaction : public BaseTransaction {
+// Derived Class 1: Normal Transaction (Demonstrates Inheritance)
+class NormalTransaction : public BaseTransaction {
 public:
-    DomesticTransaction(string id, string type, double amount, int hour, string sender, string recipient)
-        : BaseTransaction(id, type, amount, hour, sender, recipient) {}
+    NormalTransaction(string id, string from, string to, double amt, string time)
+        : BaseTransaction(id, from, to, amt, time) {}
 
-    double calculateRiskScore() const override {
-        double score = 10.0;
-        if (amount > 10000.0) score += 40.0;
-        if (amount > 25000.0) score += 30.0;
-        if (hour >= 23 || hour <= 4) score += 20.0; // Unusual nocturnal transfer
-        return (score > 100.0) ? 100.0 : score;
+    bool isSuspicious() const override {
+        return false;
     }
 
     string getRiskCategory() const override {
-        double score = calculateRiskScore();
-        if (score >= 70.0) return "High Risk";
-        if (score >= 40.0) return "Medium Risk";
-        return "Low Risk";
+        return "Normal / Low Risk";
+    }
+
+    string getTransactionType() const override {
+        return "Domestic Standard Transfer";
     }
 };
 
-// ============================================================
-// 3. DERIVED CLASS: InternationalWireTransaction (Polymorphic Risk Engine)
-// ============================================================
-class InternationalWireTransaction : public BaseTransaction {
+// Derived Class 2: Suspicious Large Transaction (Demonstrates Polymorphism)
+class SuspiciousTransaction : public BaseTransaction {
 private:
-    string countryCode;
+    string triggerReason;
 
 public:
-    InternationalWireTransaction(string id, double amount, int hour, string sender, string recipient, string country)
-        : BaseTransaction(id, "International Wire", amount, hour, sender, recipient), countryCode(country) {}
+    SuspiciousTransaction(string id, string from, string to, double amt, string time, string reason)
+        : BaseTransaction(id, from, to, amt, time), triggerReason(reason) {}
 
-    double calculateRiskScore() const override {
-        double score = 25.0; // Base international wire baseline
-        if (amount > 10000.0) score += 45.0;
-        if (amount > 50000.0) score += 30.0;
-        if (hour >= 23 || hour <= 4) score += 15.0;
-        return (score > 100.0) ? 100.0 : score;
+    bool isSuspicious() const override {
+        return true;
     }
 
     string getRiskCategory() const override {
-        double score = calculateRiskScore();
-        if (score >= 70.0) return "Suspicious (SAR Required)";
-        if (score >= 40.0) return "Enhanced Due Diligence";
-        return "Standard International";
+        return "CRITICAL SUSPICIOUS (SAR REQUIRED)";
     }
 
-    string toHTMLRow() const override {
-        double risk = calculateRiskScore();
-        string badgeClass = (risk >= 70) ? "badge-danger" : ((risk >= 40) ? "badge-warning" : "badge-success");
-        stringstream ss;
-        ss << fixed << setprecision(2) << amount;
-        return "<tr>"
-               "<td>" + id + "</td>"
-               "<td>" + type + " (" + countryCode + ")</td>"
-               "<td>$" + ss.str() + "</td>"
-               "<td>" + to_string(hour) + ":00</td>"
-               "<td>" + sender + " &rarr; " + recipient + "</td>"
-               "<td><span class='badge " + badgeClass + "'>" + to_string((int)risk) + "% (" + getRiskCategory() + ")</span></td>"
-               "</tr>";
+    string getTransactionType() const override {
+        return "High-Risk Flagged Transfer";
+    }
+
+    string getReason() const { return triggerReason; }
+};
+
+// ----------------------------------------------------------------------------
+// 3. ENTITY: SARReport (Structured Suspicious Activity Report)
+// ----------------------------------------------------------------------------
+class SARReport {
+private:
+    string reportId;
+    string subjectUser;
+    string suspectAccount;
+    double flaggedAmount;
+    string detectionReason;
+    string recommendedAction;
+    string filingDate;
+
+public:
+    SARReport(string id, string user, string acc, double amt, string reason, string action, string date)
+        : reportId(id), subjectUser(user), suspectAccount(acc), flaggedAmount(amt),
+          detectionReason(reason), recommendedAction(action), filingDate(date) {}
+
+    string getReportId() const { return reportId; }
+    string getSubject() const { return subjectUser; }
+    string getAccount() const { return suspectAccount; }
+    double getAmount() const { return flaggedAmount; }
+    string getReason() const { return detectionReason; }
+    string getAction() const { return recommendedAction; }
+    string getDate() const { return filingDate; }
+};
+
+// ----------------------------------------------------------------------------
+// 4. ENTITY: Analyst (Rule-based Evaluation & Automated SAR Generator)
+// ----------------------------------------------------------------------------
+class Analyst {
+public:
+    static bool evaluateAmount(double amt) {
+        // Core AML Rule: Statutory threshold of $10,000
+        return (amt > 10000.0);
+    }
+
+    static shared_ptr<SARReport> generateSAR(int reportSeq, const string& user, const string& acc, double amt) {
+        string repId = "SAR-2026-" + to_string(100 + reportSeq);
+        string reason = "Large Transaction: Single transfer of $" + to_string((int)amt) + 
+                        " exceeds the statutory threshold of $10,000.";
+        string action = "Freeze Account & Verify Identity. Escalate to Financial Crimes Compliance Team.";
+        string date = "2026-09-25 10:15:00 UTC";
+
+        return make_shared<SARReport>(repId, user, acc, amt, reason, action, date);
     }
 };
 
-// ============================================================
-// 4. TRANSACTION MANAGER (Demonstrates Encapsulation & Smart Pointers)
-// ============================================================
-class TransactionManager {
+// ----------------------------------------------------------------------------
+// 5. SYSTEM MANAGER: Coordinates Users, Transactions, and SAR Reports
+// ----------------------------------------------------------------------------
+class SARSystemManager {
 private:
+    vector<User> users;
     vector<shared_ptr<BaseTransaction>> transactions;
-    mutable mutex mtx;
+    vector<shared_ptr<SARReport>> sarReports;
+    mutex mtx;
 
 public:
-    TransactionManager() {
-        // Pre-populate with realistic banking telemetry
-        addTransaction(make_shared<DomesticTransaction>("TXN-1001", "Checking Transfer", 3200.0, 14, "Account #4401", "Account #9122"));
-        addTransaction(make_shared<DomesticTransaction>("TXN-1002", "ATM Cash Withdrawal", 15400.0, 2, "Account #3190", "External ATM"));
-        addTransaction(make_shared<InternationalWireTransaction>("TXN-1003", 28500.0, 16, "Corporate Acct #0012", "Offshore Partner Ltd", "CH"));
-        addTransaction(make_shared<DomesticTransaction>("TXN-1004", "Peer-to-Peer Transfer", 450.0, 11, "Account #8872", "Account #1104"));
-        addTransaction(make_shared<InternationalWireTransaction>("TXN-1005", 85000.0, 3, "Account #7721", "Global Holdings Inc", "CY"));
+    SARSystemManager() {
+        // Pre-populate users
+        users.emplace_back("alice", "1234", "ACC-789012", 24500.0);
+        users.emplace_back("bob", "5678", "ACC-345678", 8500.0);
+
+        // Pre-populate transactions (similar to original {3000, 4500, 12000})
+        addTransaction(make_shared<NormalTransaction>("TXN-001", "Alice (ACC-789012)", "Retail Merchant", 3000.0, "2026-09-24 14:20"));
+        addTransaction(make_shared<NormalTransaction>("TXN-002", "Alice (ACC-789012)", "Electric Utility", 4500.0, "2026-09-24 16:45"));
+        addTransaction(make_shared<SuspiciousTransaction>("TXN-003", "Alice (ACC-789012)", "Unknown Offshore Entity", 12000.0, "2026-09-24 19:10", "Amount > $10,000 Threshold"));
+
+        // Pre-populate initial SAR report for the $12,000 transfer
+        sarReports.push_back(Analyst::generateSAR(1, "alice", "ACC-789012", 12000.0));
     }
 
     void addTransaction(shared_ptr<BaseTransaction> txn) {
@@ -146,211 +197,370 @@ public:
         transactions.push_back(txn);
     }
 
-    string getAllRowsHTML() const {
+    void addSAR(shared_ptr<SARReport> report) {
         lock_guard<mutex> lock(mtx);
-        string rows = "";
-        for (const auto& txn : transactions) {
-            rows += txn->toHTMLRow();
-        }
-        return rows;
+        sarReports.push_back(report);
     }
 
-    int getTotalSARCount() const {
+    string getPreviousTxnsHTML() {
         lock_guard<mutex> lock(mtx);
-        int count = 0;
-        for (const auto& txn : transactions) {
-            if (txn->calculateRiskScore() >= 70.0) count++;
+        stringstream ss;
+        ss << "<div class='table-responsive'><table class='styled-table'>"
+           << "<thead><tr><th>Txn ID</th><th>Sender &rarr; Recipient</th><th>Amount</th><th>Type / Status</th><th>Timestamp</th></tr></thead><tbody>";
+
+        for (const auto& t : transactions) {
+            string badge = t->isSuspicious() 
+                ? "<span class='badge badge-danger'>Flagged: Suspicious</span>" 
+                : "<span class='badge badge-success'>Normal</span>";
+
+            ss << "<tr>"
+               << "<td><strong>" << t->getId() << "</strong></td>"
+               << "<td>" << t->getSender() << " &rarr; " << t->getRecipient() << "</td>"
+               << "<td>$" << fixed << setprecision(2) << t->getAmount() << "</td>"
+               << "<td>" << badge << "</td>"
+               << "<td>" << t->getTimestamp() << "</td>"
+               << "</tr>";
         }
-        return count;
+        ss << "</tbody></table></div>";
+        return ss.str();
     }
 
-    size_t size() const {
+    string getSarReportsHTML() {
         lock_guard<mutex> lock(mtx);
-        return transactions.size();
+        if (sarReports.empty()) {
+            return "<div class='alert-info'>No SAR reports generated yet. Normal banking transactions active.</div>";
+        }
+
+        stringstream ss;
+        for (const auto& rep : sarReports) {
+            ss << "<div class='sar-card'>"
+               << "  <div class='sar-header'>"
+               << "    <span class='sar-id'>📑 " << rep->getReportId() << "</span>"
+               << "    <span class='badge badge-danger'>STATUS: REGULATORY AUDIT REQUIRED</span>"
+               << "  </div>"
+               << "  <div class='sar-grid'>"
+               << "    <div><strong>Subject / Suspect:</strong> " << rep->getSubject() << " (" << rep->getAccount() << ")</div>"
+               << "    <div><strong>Flagged Amount:</strong> $" << fixed << setprecision(2) << rep->getAmount() << "</div>"
+               << "    <div><strong>Filing Timestamp:</strong> " << rep->getDate() << "</div>"
+               << "    <div><strong>Regulatory Rule:</strong> 31 U.S.C. 5318(g) Bank Secrecy Act</div>"
+               << "  </div>"
+               << "  <div class='sar-reason'><strong>Reason for SAR:</strong> " << rep->getReason() << "</div>"
+               << "  <div class='sar-action'><strong>Recommended Action:</strong> " << rep->getAction() << "</div>"
+               << "</div>";
+        }
+        return ss.str();
     }
 };
 
-// ============================================================
-// 5. HTML PAGE BUILDER (UI Generation Engine)
-// ============================================================
-class PageBuilder {
-public:
-    static string buildDashboard(const TransactionManager& mgr) {
-        string rows = mgr.getAllRowsHTML();
-        string sarCount = to_string(mgr.getTotalSARCount());
-        string totalTxns = to_string(mgr.size());
+// ----------------------------------------------------------------------------
+// 6. HTML PAGE GENERATOR (Renders the 4 Switchable Tabs Interface)
+// ----------------------------------------------------------------------------
+string generateFullPage(SARSystemManager& mgr) {
+    string prevTxnsTable = mgr.getPreviousTxnsHTML();
+    string sarReportsCards = mgr.getSarReportsHTML();
 
-        return "<!DOCTYPE html>"
-               "<html lang='en'>"
-               "<head>"
-               "<meta charset='UTF-8'>"
-               "<title>Automated SAR Generation System</title>"
-               "<style>"
-               "body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: #0f172a; color: #f8fafc; margin: 0; padding: 24px; }"
-               ".container { max-width: 1050px; margin: 0 auto; }"
-               ".header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155; padding-bottom: 16px; margin-bottom: 24px; }"
-               "h1 { margin: 0; font-size: 24px; color: #38bdf8; font-weight: 700; }"
-               ".subtitle { color: #94a3b8; font-size: 14px; margin-top: 4px; }"
-               ".stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px; }"
-               ".stat-card { background: #1e293b; border: 1px solid #334155; padding: 18px; border-radius: 8px; }"
-               ".stat-val { font-size: 28px; font-weight: bold; color: #f8fafc; margin-top: 4px; }"
-               ".stat-danger { color: #f43f5e; }"
-               ".card { background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 20px; margin-bottom: 24px; }"
-               "h2 { font-size: 18px; margin-top: 0; color: #e2e8f0; border-bottom: 1px solid #334155; padding-bottom: 10px; }"
-               "table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; margin-top: 12px; }"
-               "th, td { padding: 12px 14px; border-bottom: 1px solid #334155; }"
-               "th { background: #0f172a; color: #94a3b8; font-weight: 600; text-transform: uppercase; font-size: 12px; }"
-               ".badge { padding: 4px 8px; border-radius: 4px; font-weight: 600; font-size: 12px; display: inline-block; }"
-               ".badge-success { background: #064e3b; color: #34d399; }"
-               ".badge-warning { background: #78350f; color: #fbbf24; }"
-               ".badge-danger { background: #881337; color: #fda4af; }"
-               ".form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 16px; }"
-               "input, select, button { padding: 10px; border-radius: 6px; border: 1px solid #475569; background: #0f172a; color: #fff; font-size: 14px; }"
-               "button { background: #0284c7; border: none; cursor: pointer; font-weight: 600; transition: background 0.2s; }"
-               "button:hover { background: #0369a1; }"
-               ".footer { text-align: center; color: #64748b; font-size: 13px; margin-top: 32px; border-top: 1px solid #1e293b; padding-top: 16px; }"
-               "</style>"
-               "</head>"
-               "<body>"
-               "<div class='container'>"
-               "  <div class='header'>"
-               "    <div>"
-               "      <h1>Automated Suspicious Activity Report (SAR) System</h1>"
-               "      <div class='subtitle'>C++ Multi-threaded Winsock2 HTTP Server &amp; Risk Classification Engine</div>"
-               "    </div>"
-               "    <div><span class='badge badge-success'>System Online: Port 9090</span></div>"
-               "  </div>"
-               "  <div class='stats-grid'>"
-               "    <div class='stat-card'><div>Total Telemetry Events</div><div class='stat-val'>" + totalTxns + "</div></div>"
-               "    <div class='stat-card'><div>Critical SAR Alerts Flagged</div><div class='stat-val stat-danger'>" + sarCount + "</div></div>"
-               "    <div class='stat-card'><div>Engine Backend</div><div class='stat-val' style='font-size:20px; color:#38bdf8;'>Modern C++ / Winsock</div></div>"
-               "  </div>"
-               "  <div class='card'>"
-               "    <h2>Live Ingested Banking Transactions</h2>"
-               "    <table>"
-               "      <thead><tr><th>TXN ID</th><th>Type</th><th>Amount</th><th>Timestamp</th><th>Route</th><th>SAR Risk Evaluation</th></tr></thead>"
-               "      <tbody>" + rows + "</tbody>"
-               "    </table>"
-               "  </div>"
-               "  <div class='footer'>Automated SAR Generation System &bull; Designed &amp; Developed with C++ Object-Oriented Architecture</div>"
-               "</div>"
-               "</body></html>";
-    }
-};
+    stringstream page;
+    page << "HTTP/1.1 200 OK\r\n"
+         << "Content-Type: text/html\r\n"
+         << "Connection: close\r\n\r\n"
+         << "<!DOCTYPE html>\n"
+         << "<html lang='en'>\n"
+         << "<head>\n"
+         << "  <meta charset='UTF-8'>\n"
+         << "  <title>Automated SAR Generation System Using OOPS</title>\n"
+         << "  <style>\n"
+         << "    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }\n"
+         << "    body { background: #0f172a; color: #f8fafc; padding: 24px; }\n"
+         << "    .container { max-width: 1000px; margin: 0 auto; }\n"
+         << "    \n"
+         << "    /* Header */\n"
+         << "    .title-bar { text-align: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 2px solid #334155; }\n"
+         << "    .title-bar h1 { color: #38bdf8; font-size: 26px; margin-bottom: 6px; }\n"
+         << "    .title-bar p { color: #94a3b8; font-size: 14px; }\n"
+         << "    \n"
+         << "    /* 4 Navigation Tabs */\n"
+         << "    .tab-nav { display: flex; gap: 8px; margin-bottom: 20px; background: #1e293b; padding: 6px; border-radius: 10px; border: 1px solid #334155; }\n"
+         << "    .tab-btn { flex: 1; padding: 12px 14px; background: transparent; border: none; color: #94a3b8; font-size: 14px; font-weight: 600; cursor: pointer; border-radius: 8px; transition: all 0.2s; text-align: center; }\n"
+         << "    .tab-btn:hover { color: #fff; background: #334155; }\n"
+         << "    .tab-btn.active { background: #0284c7; color: #ffffff; box-shadow: 0 2px 8px rgba(2, 132, 199, 0.4); }\n"
+         << "    \n"
+         << "    /* Tab Content Boxes */\n"
+         << "    .tab-content { display: none; background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 24px; }\n"
+         << "    .tab-content.active { display: block; animation: fadeIn 0.3s ease; }\n"
+         << "    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }\n"
+         << "    \n"
+         << "    /* Inputs & Buttons */\n"
+         << "    .form-group { margin-bottom: 16px; text-align: left; }\n"
+         << "    label { display: block; font-size: 13px; font-weight: 600; color: #cbd5e1; margin-bottom: 6px; }\n"
+         << "    input, select { width: 100%; padding: 12px; border-radius: 6px; border: 1px solid #475569; background: #0f172a; color: #fff; font-size: 15px; margin-bottom: 10px; }\n"
+         << "    input:focus { outline: none; border-color: #38bdf8; }\n"
+         << "    .btn { padding: 12px 24px; border: none; border-radius: 6px; font-weight: 600; font-size: 14px; cursor: pointer; transition: background 0.2s; }\n"
+         << "    .btn-primary { background: #22c55e; color: #fff; }\n"
+         << "    .btn-primary:hover { background: #16a34a; }\n"
+         << "    .btn-blue { background: #0284c7; color: #fff; }\n"
+         << "    .btn-blue:hover { background: #0369a1; }\n"
+         << "    .btn-block { width: 100%; }\n"
+         << "    \n"
+         << "    /* Result Boxes */\n"
+         << "    .result-box { margin-top: 18px; padding: 16px; border-radius: 8px; font-size: 15px; font-weight: 500; display: none; }\n"
+         << "    .result-success { background: #064e3b; border: 1px solid #059669; color: #6ee7b7; display: block; }\n"
+         << "    .result-danger { background: #881337; border: 1px solid #be123c; color: #fecdd3; display: block; }\n"
+         << "    .result-warning { background: #451a03; border: 1px solid #b45309; color: #fde68a; display: block; }\n"
+         << "    \n"
+         << "    /* Tables & Badges */\n"
+         << "    .styled-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; }\n"
+         << "    .styled-table th { background: #0f172a; padding: 12px; color: #94a3b8; font-weight: 600; border-bottom: 2px solid #334155; }\n"
+         << "    .styled-table td { padding: 12px; border-bottom: 1px solid #334155; color: #e2e8f0; }\n"
+         << "    .badge { padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 700; display: inline-block; }\n"
+         << "    .badge-success { background: #064e3b; color: #34d399; }\n"
+         << "    .badge-danger { background: #881337; color: #fca5a5; }\n"
+         << "    \n"
+         << "    /* SAR Cards */\n"
+         << "    .sar-card { background: #0f172a; border: 1px solid #be123c; border-left: 6px solid #e11d48; border-radius: 8px; padding: 18px; margin-bottom: 16px; }\n"
+         << "    .sar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }\n"
+         << "    .sar-id { font-size: 17px; font-weight: bold; color: #f43f5e; }\n"
+         << "    .sar-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 14px; color: #cbd5e1; margin-bottom: 12px; }\n"
+         << "    .sar-reason { background: #1e293b; padding: 10px; border-radius: 6px; font-size: 13px; color: #fde047; margin-bottom: 8px; }\n"
+         << "    .sar-action { background: #3b0764; border: 1px solid #7e22ce; padding: 10px; border-radius: 6px; font-size: 13px; color: #e9d5ff; font-weight: 600; }\n"
+         << "    \n"
+         << "    .footer { text-align: center; color: #64748b; font-size: 13px; margin-top: 24px; }\n"
+         << "  </style>\n"
+         << "</head>\n"
+         << "<body>\n"
+         << "  <div class='container'>\n"
+         << "    <div class='title-bar'>\n"
+         << "      <h1>Automated SAR Generation System Using OOPS</h1>\n"
+         << "      <p>C++ Winsock2 Web Server &bull; Port 9090 &bull; Object-Oriented Financial Crime Compliance</p>\n"
+         << "    </div>\n"
+         << "    \n"
+         << "    <!-- 4 TABS NAVIGATION -->\n"
+         << "    <nav class='tab-nav'>\n"
+         << "      <button class='tab-btn active' onclick=\"switchTab('tabUser')\">👤 1. Customer Login</button>\n"
+         << "      <button class='tab-btn' onclick=\"switchTab('tabTxns')\">💳 2. Transaction History</button>\n"
+         << "      <button class='tab-btn' onclick=\"switchTab('tabAnalyst')\">🔍 3. AML Analyst & Rules</button>\n"
+         << "      <button class='tab-btn' onclick=\"switchTab('tabSAR')\">📑 4. Generated SAR Reports</button>\n"
+         << "    </nav>\n"
+         << "    \n"
+         << "    <!-- TAB 1: CUSTOMER LOGIN -->\n"
+         << "    <div id='tabUser' class='tab-content active'>\n"
+         << "      <h2 style='color:#38bdf8; margin-bottom:12px;'>Customer Authentication (User Entity)</h2>\n"
+         << "      <p style='color:#94a3b8; font-size:14px; margin-bottom:18px;'>Demonstrates Class &amp; Object encapsulation. Test with sample accounts: <strong>alice / 1234</strong> or <strong>bob / 5678</strong>.</p>\n"
+         << "      \n"
+         << "      <div style='max-width: 400px; margin: 0 auto; text-align:center;'>\n"
+         << "        <input id='user' placeholder='Username (e.g. alice)'>\n"
+         << "        <input id='pass' type='password' placeholder='Password (e.g. 1234)'>\n"
+         << "        <button class='btn btn-primary btn-block' onclick='login()'>Login to Account</button>\n"
+         << "        <div id='loginBox' class='result-box'></div>\n"
+         << "      </div>\n"
+         << "    </div>\n"
+         << "    \n"
+         << "    <!-- TAB 2: TRANSACTIONS & PREVIOUS HISTORY -->\n"
+         << "    <div id='tabTxns' class='tab-content'>\n"
+         << "      <h2 style='color:#38bdf8; margin-bottom:12px;'>Previous Banking Transactions (Transaction Entity)</h2>\n"
+         << "      <p style='color:#94a3b8; font-size:14px; margin-bottom:16px;'>Displays transaction telemetry stored in C++ objects (including initial $3,000, $4,500, and $12,000 records).</p>\n"
+         << "      <div id='txnsContainer'>" << prevTxnsTable << "</div>\n"
+         << "    </div>\n"
+         << "    \n"
+         << "    <!-- TAB 3: AML ANALYST & RULES ENGINE -->\n"
+         << "    <div id='tabAnalyst' class='tab-content'>\n"
+         << "      <h2 style='color:#38bdf8; margin-bottom:12px;'>Compliance Analyst Rules (Rule Engine Entity)</h2>\n"
+         << "      <p style='color:#94a3b8; font-size:14px; margin-bottom:18px;'>Evaluates transactions against statutory Anti-Money Laundering (AML) thresholds using Polymorphism.</p>\n"
+         << "      \n"
+         << "      <div style='background:#0f172a; padding:16px; border-radius:8px; margin-bottom:20px; font-size:14px;'>\n"
+         << "        <strong style='color:#facc15;'>Active Rule Set:</strong><br>\n"
+         << "        &bull; <strong>Rule 1:</strong> Amount &gt; $10,000 &rarr; <span style='color:#f43f5e;'>Triggers Automated SAR Filing</span> (Reason: Large Transaction)<br>\n"
+         << "        &bull; <strong>Rule 2:</strong> Amount &le; $10,000 &rarr; <span style='color:#34d399;'>Standard Domestic Clearance</span>\n"
+         << "      </div>\n"
+         << "      \n"
+         << "      <div style='max-width: 500px; margin: 0 auto;'>\n"
+         << "        <label>Enter Transaction Amount ($ USD):</label>\n"
+         << "        <input id='amt' type='number' placeholder='Enter amount (e.g. 15000)'>\n"
+         << "        <label>Recipient Account / Entity:</label>\n"
+         << "        <input id='recipient' placeholder='e.g. Offshore Holdings Ltd' value='External Corporate Entity'>\n"
+         << "        <button class='btn btn-blue btn-block' onclick='analyzeTransaction()'>🔍 Analyze Transaction with Analyst Rules</button>\n"
+         << "        <div id='analystResult' class='result-box'></div>\n"
+         << "      </div>\n"
+         << "    </div>\n"
+         << "    \n"
+         << "    <!-- TAB 4: GENERATED SAR REPORTS -->\n"
+         << "    <div id='tabSAR' class='tab-content'>\n"
+         << "      <div style='display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;'>\n"
+         << "        <h2 style='color:#38bdf8; margin:0;'>Structured SAR Reports (Report Entity)</h2>\n"
+         << "        <button class='btn btn-primary' onclick=\"switchTab('tabAnalyst')\">+ Analyze New Transaction</button>\n"
+         << "      </div>\n"
+         << "      <p style='color:#94a3b8; font-size:14px; margin-bottom:18px;'>Official Suspicious Activity Reports generated automatically according to Bank Secrecy Act (BSA) compliance guidelines.</p>\n"
+         << "      <div id='sarReportsContainer'>" << sarReportsCards << "</div>\n"
+         << "    </div>\n"
+         << "    \n"
+         << "    <div class='footer'>\n"
+         << "      Design and Implementation of an Automated SAR Generation System Using OOPS &bull; Built with C++ &amp; Winsock2\n"
+         << "    </div>\n"
+         << "  </div>\n"
+         << "  \n"
+         << "  <!-- JAVASCRIPT: 4-TAB SWITCHING & CLIENT LOGIC -->\n"
+         << "  <script>\n"
+         << "    function switchTab(tabId) {\n"
+         << "      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));\n"
+         << "      document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));\n"
+         << "      \n"
+         << "      let activeBtn = Array.from(document.querySelectorAll('.tab-btn')).find(b => b.getAttribute('onclick').includes(tabId));\n"
+         << "      if (activeBtn) activeBtn.classList.add('active');\n"
+         << "      document.getElementById(tabId).classList.add('active');\n"
+         << "    }\n"
+         << "    \n"
+         << "    function login() {\n"
+         << "      let u = document.getElementById('user').value.trim();\n"
+         << "      let p = document.getElementById('pass').value.trim();\n"
+         << "      let box = document.getElementById('loginBox');\n"
+         << "      \n"
+         << "      if ((u === 'alice' && p === '1234') || (u === 'bob' && p === '5678')) {\n"
+         << "        let accNum = (u === 'alice') ? 'ACC-789012' : 'ACC-345678';\n"
+         << "        let balance = (u === 'alice') ? '$24,500.00' : '$8,500.00';\n"
+         << "        \n"
+         << "        box.className = 'result-box result-success';\n"
+         << "        box.innerHTML = '<strong>Login Successful!</strong><br><br>' +\n"
+         << "                        'Welcome, <strong>' + u.toUpperCase() + '</strong><br>' +\n"
+         << "                        'Account Number: <strong>' + accNum + '</strong><br>' +\n"
+         << "                        'Available Balance: <strong>' + balance + '</strong><br><br>' +\n"
+         << "                        '<button class=\"btn btn-blue\" onclick=\"switchTab(\\'tabTxns\\')\">View Transaction History &rarr;</button> ' +\n"
+         << "                        '<button class=\"btn btn-primary\" onclick=\"switchTab(\\'tabAnalyst\\')\">Analyze New Transfer &rarr;</button>';\n"
+         << "      } else {\n"
+         << "        box.className = 'result-box result-danger';\n"
+         << "        box.innerHTML = '<strong>Invalid Login!</strong><br>Use username <em>alice</em> (pass: 1234) or <em>bob</em> (pass: 5678).';\n"
+         << "      }\n"
+         << "    }\n"
+         << "    \n"
+         << "    let sarReportCount = 1;\n"
+         << "    \n"
+         << "    function analyzeTransaction() {\n"
+         << "      let amt = parseFloat(document.getElementById('amt').value);\n"
+         << "      let recipient = document.getElementById('recipient').value.trim();\n"
+         << "      let resultBox = document.getElementById('analystResult');\n"
+         << "      \n"
+         << "      if (isNaN(amt) || amt <= 0) {\n"
+         << "        alert('Please enter a valid positive transaction amount.');\n"
+         << "        return;\n"
+         << "      }\n"
+         << "      \n"
+         << "      if (amt > 10000) {\n"
+         << "        sarReportCount++;\n"
+         << "        let repId = 'SAR-2026-' + (100 + sarReportCount);\n"
+         << "        let dateStr = new Date().toISOString().replace('T', ' ').substring(0, 19) + ' UTC';\n"
+         << "        \n"
+         << "        resultBox.className = 'result-box result-danger';\n"
+         << "        resultBox.innerHTML = '<strong>🚨 SUSPICIOUS ACTIVITY REPORT TRIGGERED!</strong><br><br>' +\n"
+         << "                              '<strong>Reason:</strong> Large Transaction ($' + amt.toLocaleString() + ' &gt; $10,000 threshold)<br>' +\n"
+         << "                              '<strong>Recommended Action:</strong> Freeze Account &amp; Verify Identity.<br><br>' +\n"
+         << "                              '<em>Automated SAR Report #' + repId + ' has been generated and filed in Tab 4.</em><br><br>' +\n"
+         << "                              '<button class=\"btn btn-primary\" onclick=\"switchTab(\\'tabSAR\\')\">View Generated SAR Report &rarr;</button>';\n"
+         << "        \n"
+         << "        // Append to SAR Tab dynamically\n"
+         << "        let sarContainer = document.getElementById('sarReportsContainer');\n"
+         << "        let newCard = document.createElement('div');\n"
+         << "        newCard.className = 'sar-card';\n"
+         << "        newCard.innerHTML = '<div class=\"sar-header\">' +\n"
+         << "                            '  <span class=\"sar-id\">📑 ' + repId + '</span>' +\n"
+         << "                            '  <span class=\"badge badge-danger\">STATUS: REGULATORY AUDIT REQUIRED</span>' +\n"
+         << "                            '</div>' +\n"
+         << "                            '<div class=\"sar-grid\">' +\n"
+         << "                            '  <div><strong>Subject / Suspect:</strong> Active Customer (ACC-789012)</div>' +\n"
+         << "                            '  <div><strong>Flagged Amount:</strong> $' + amt.toLocaleString() + '.00</div>' +\n"
+         << "                            '  <div><strong>Filing Timestamp:</strong> ' + dateStr + '</div>' +\n"
+         << "                            '  <div><strong>Recipient:</strong> ' + recipient + '</div>' +\n"
+         << "                            '</div>' +\n"
+         << "                            '<div class=\"sar-reason\"><strong>Reason for SAR:</strong> Large Transaction: Single transfer of $' + amt.toLocaleString() + ' exceeds statutory threshold of $10,000.</div>' +\n"
+         << "                            '<div class=\"sar-action\"><strong>Recommended Action:</strong> Freeze Account &amp; Verify Identity. Escalate to Compliance Team.</div>';\n"
+         << "        sarContainer.prepend(newCard);\n"
+         << "        \n"
+         << "      } else {\n"
+         << "        resultBox.className = 'result-box result-success';\n"
+         << "        resultBox.innerHTML = '<strong>✅ Transaction Normal &amp; Cleared</strong><br>' +\n"
+         << "                              'Amount $' + amt.toLocaleString() + ' is within standard $10,000 threshold.<br>' +\n"
+         << "                              'No SAR filing required.';\n"
+         << "      }\n"
+         << "    }\n"
+         << "  </script>\n"
+         << "</body>\n"
+         << "</html>\n";
 
-// ============================================================
-// 6. MULTI-THREADED WINSOCK2 HTTP SERVER (Demonstrates Sockets & Concurrency)
-// ============================================================
-class HTTPServer {
-private:
-    int port;
-    SOCKET listenSocket;
-    bool running;
-    TransactionManager& txnManager;
+    return page.str();
+}
 
-    void handleClient(SOCKET clientSocket) {
-        char buffer[2048] = {0};
-        int bytesRead = recv(clientSocket, buffer, sizeof(buffer) - 1, 0);
-
-        if (bytesRead > 0) {
-            string request(buffer, bytesRead);
-            string html = PageBuilder::buildDashboard(txnManager);
-
-            stringstream response;
-            response << "HTTP/1.1 200 OK\r\n"
-                     << "Content-Type: text/html; charset=UTF-8\r\n"
-                     << "Content-Length: " << html.length() << "\r\n"
-                     << "Connection: close\r\n\r\n"
-                     << html;
-
-            string respStr = response.str();
-            send(clientSocket, respStr.c_str(), (int)respStr.length(), 0);
-        }
-
-        closesocket(clientSocket);
-    }
-
-public:
-    HTTPServer(int p, TransactionManager& tm) : port(p), listenSocket(INVALID_SOCKET), running(false), txnManager(tm) {}
-
-    bool start() {
-        WSADATA wsaData;
-        if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
-            cerr << "[ERROR] WSAStartup failed.\n";
-            return false;
-        }
-
-        listenSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-        if (listenSocket == INVALID_SOCKET) {
-            cerr << "[ERROR] Failed to create socket: " << WSAGetLastError() << "\n";
-            WSACleanup();
-            return false;
-        }
-
-        // Allow immediate port reuse
-        int opt = 1;
-        setsockopt(listenSocket, SOL_SOCKET, SO_REUSEADDR, (const char*)&opt, sizeof(opt));
-
-        sockaddr_in serverAddr{};
-        serverAddr.sin_family = AF_INET;
-        serverAddr.sin_addr.s_addr = INADDR_ANY;
-        serverAddr.sin_port = htons(port);
-
-        if (bind(listenSocket, (sockaddr*)&serverAddr, sizeof(serverAddr)) == SOCKET_ERROR) {
-            cerr << "[ERROR] Bind failed on port " << port << " with error: " << WSAGetLastError() << "\n";
-            closesocket(listenSocket);
-            WSACleanup();
-            return false;
-        }
-
-        if (listen(listenSocket, SOMAXCONN) == SOCKET_ERROR) {
-            cerr << "[ERROR] Listen failed: " << WSAGetLastError() << "\n";
-            closesocket(listenSocket);
-            WSACleanup();
-            return false;
-        }
-
-        running = true;
-        cout << "========================================================\n";
-        cout << " [SUCCESS] SAR Generation HTTP Server is RUNNING!\n";
-        cout << " Open your browser: http://localhost:" << port << "\n";
-        cout << " Press Ctrl+C in this terminal to stop the server.\n";
-        cout << "========================================================\n";
-
-        while (running) {
-            sockaddr_in clientAddr{};
-            int clientAddrLen = sizeof(clientAddr);
-            SOCKET clientSocket = accept(listenSocket, (sockaddr*)&clientAddr, &clientAddrLen);
-
-            if (clientSocket != INVALID_SOCKET) {
-                // Multi-threaded connection handling
-                thread(&HTTPServer::handleClient, this, clientSocket).detach();
-            }
-        }
-
-        return true;
-    }
-
-    void stop() {
-        running = false;
-        if (listenSocket != INVALID_SOCKET) {
-            closesocket(listenSocket);
-            listenSocket = INVALID_SOCKET;
-        }
-        WSACleanup();
-    }
-
-    ~HTTPServer() {
-        stop();
-    }
-};
-
-// ============================================================
-// MAIN ENTRY POINT
-// ============================================================
+// ----------------------------------------------------------------------------
+// 7. WINSOCK2 MULTI-CLIENT HTTP SERVER
+// ----------------------------------------------------------------------------
 int main() {
-    TransactionManager manager;
-    HTTPServer server(9090, manager);
-    server.start();
+    WSADATA wsa;
+    SOCKET server_fd, client_fd;
+    sockaddr_in server_addr, client_addr;
+    int client_len = sizeof(client_addr);
+
+    if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0) {
+        cerr << "[-] WSAStartup failed. Error Code: " << WSAGetLastError() << endl;
+        return 1;
+    }
+
+    server_fd = socket(AF_INET, SOCK_STREAM, 0);
+    if (server_fd == INVALID_SOCKET) {
+        cerr << "[-] Socket creation failed. Error Code: " << WSAGetLastError() << endl;
+        WSACleanup();
+        return 1;
+    }
+
+    // Allow address reuse
+    int opt = 1;
+    setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, (const char*)&opt, sizeof(opt));
+
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_port = htons(9090);
+    server_addr.sin_addr.s_addr = INADDR_ANY;
+
+    if (bind(server_fd, (sockaddr*)&server_addr, sizeof(server_addr)) == SOCKET_ERROR) {
+        cerr << "[-] Bind failed on port 9090. Error Code: " << WSAGetLastError() << endl;
+        closesocket(server_fd);
+        WSACleanup();
+        return 1;
+    }
+
+    if (listen(server_fd, 10) == SOCKET_ERROR) {
+        cerr << "[-] Listen failed. Error Code: " << WSAGetLastError() << endl;
+        closesocket(server_fd);
+        WSACleanup();
+        return 1;
+    }
+
+    SARSystemManager manager;
+
+    cout << "===================================================================\n";
+    cout << "  Design & Implementation of Automated SAR Generation System (OOPS)\n";
+    cout << "===================================================================\n";
+    cout << "[+] Server running at http://localhost:9090\n";
+    cout << "[+] 4 Switchable Tabs Active:\n";
+    cout << "    1. Customer Login (alice/1234, bob/5678)\n";
+    cout << "    2. Transaction History (Previous: $3000, $4500, $12000)\n";
+    cout << "    3. AML Analyst & Rules Engine (Amount > $10,000 threshold)\n";
+    cout << "    4. Generated Structured SAR Reports (Freeze Account Action)\n";
+    cout << "===================================================================\n";
+
+    while (true) {
+        client_fd = accept(server_fd, (sockaddr*)&client_addr, &client_len);
+        if (client_fd == INVALID_SOCKET) {
+            continue;
+        }
+
+        char buffer[4096];
+        int bytesRead = recv(client_fd, buffer, sizeof(buffer) - 1, 0);
+        if (bytesRead > 0) {
+            buffer[bytesRead] = '\0';
+
+            string response = generateFullPage(manager);
+            send(client_fd, response.c_str(), (int)response.size(), 0);
+        }
+
+        closesocket(client_fd);
+    }
+
+    closesocket(server_fd);
+    WSACleanup();
     return 0;
 }
