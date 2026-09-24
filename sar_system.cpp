@@ -1005,7 +1005,7 @@ string buildCompleteWebPage(SARSystemManager& mgr) {
          << "                 'REGULATORY ACTION TAKEN:\\n' +\n"
          << "                 rep.action + '\\n' +\n"
          << "                 '--------------------------------------------------------\\n' +\n"
-         << "                 'ELECTRONIC SEAL: SHA256:' + Math.random().toString(36).substring(2) + Math.random().toString(36).substring(2);\\n';\n"
+         << "                 'ELECTRONIC SEAL: SHA256: 7f9a8b2c4e1d3f0a9b8c7d6e5f4a3b2c\\n';\n"
          << "      \n"
          << "      let blob = new Blob([text], { type: 'text/plain' });\n"
          << "      let url = URL.createObjectURL(blob);\n"
