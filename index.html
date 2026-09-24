@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+  <meta charset='UTF-8'>
+  <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+  <title>Automated SAR Generation System Using OOPS</title>
+  <link href='https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap' rel='stylesheet'>
+  <style>
+    :root {
+      --bg-main: #060b14;
+      --bg-card: #0c1527;
+      --bg-card-sub: #101d36;
+      --border: #1a2c4e;
+      --border-blue: #0284c7;
+      --text-main: #f0f6fc;
+      --text-muted: #8ba2c4;
+      --blue-glow: #38bdf8;
+      --blue-primary: #0284c7;
+      --blue-hover: #0369a1;
+      --blue-card: #132342;
+      --danger: #ef4444;
+      --danger-bg: #2d0b13;
+      --warning: #f59e0b;
+      --success: #10b981;
+      --font-sans: 'Plus Jakarta Sans', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg-main); color: var(--text-main); font-family: var(--font-sans); padding: 24px; min-height: 100vh; overflow-x: hidden; }
+    .container { max-width: 1120px; margin: 0 auto; }
+    
+    /* Header Bar */
+    .navbar { display: flex; justify-content: space-between; align-items: center; padding-bottom: 20px; border-bottom: 1px solid var(--border); margin-bottom: 22px; }
+    .brand-title { font-size: 22px; font-weight: 800; color: #38bdf8; display: flex; align-items: center; gap: 10px; letter-spacing: -0.02em; }
+    .badge-cpp { background: #172554; color: #93c5fd; font-family: var(--font-mono); font-size: 11px; padding: 3px 9px; border-radius: 6px; border: 1px solid #1e40af; font-weight: 700; }
+    .live-status { display: flex; align-items: center; gap: 10px; background: #0c1527; padding: 8px 16px; border-radius: 30px; border: 1px solid var(--border); font-size: 13px; }
+    .dot { width: 9px; height: 9px; background: var(--blue-glow); border-radius: 50%; box-shadow: 0 0 10px var(--blue-glow); animation: pulse 1.8s infinite; }
+    @keyframes pulse { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(0.85); } }
+    
+    /* 4 Navigation Tabs */
+    .tab-bar { display: flex; gap: 8px; background: #09101f; padding: 6px; border-radius: 14px; border: 1px solid var(--border); margin-bottom: 24px; }
+    .tab-btn { flex: 1; padding: 13px 16px; background: transparent; border: none; color: var(--text-muted); font-size: 14px; font-weight: 700; cursor: pointer; border-radius: 10px; transition: all 0.2s; text-align: center; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .tab-btn:hover { color: #fff; background: #132038; }
+    .tab-btn.active { background: linear-gradient(135deg, #0284c7, #0369a1); color: #fff; box-shadow: 0 4px 14px rgba(2, 132, 199, 0.45); }
+    
+    /* Tab Contents */
+    .tab-pane { display: none; background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 28px; animation: fadeIn 0.25s ease; }
+    .tab-pane.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+    
+    /* Grid Layouts & Cards */
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+    @media (max-width: 880px) { .grid-2 { grid-template-columns: 1fr; } }
+    .card-box { background: var(--bg-card-sub); border: 1px solid var(--border); border-radius: 12px; padding: 22px; margin-bottom: 16px; }
+    .card-title { font-size: 15px; font-weight: 800; color: #e2e8f0; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; letter-spacing: -0.01em; }
+    
+    /* Form Controls */
+    label { display: block; font-size: 11px; font-weight: 700; color: var(--text-muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.05em; }
+    input, select { width: 100%; padding: 12px 14px; background: #070d18; border: 1px solid var(--border); border-radius: 8px; color: #fff; font-size: 14px; margin-bottom: 14px; font-family: var(--font-sans); transition: border-color 0.2s, box-shadow 0.2s; }
+    input:focus, select:focus { outline: none; border-color: var(--blue-glow); box-shadow: 0 0 10px rgba(56, 189, 248, 0.25); }
+    
+    /* Buttons */
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 22px; border-radius: 9px; font-weight: 700; font-size: 14px; cursor: pointer; border: none; transition: all 0.2s; font-family: var(--font-sans); }
+    .btn-primary { background: linear-gradient(135deg, #0284c7, #026597); color: #fff; box-shadow: 0 2px 10px rgba(2, 132, 199, 0.3); }
+    .btn-primary:hover { background: linear-gradient(135deg, #0369a1, #075985); transform: translateY(-1px); }
+    .btn-success { background: linear-gradient(135deg, #059669, #047857); color: #fff; }
+    .btn-success:hover { background: #047857; }
+    .btn-danger { background: linear-gradient(135deg, #dc2626, #b91c1c); color: #fff; box-shadow: 0 2px 10px rgba(220, 38, 38, 0.3); }
+    .btn-danger:hover { background: #b91c1c; }
+    .btn-secondary { background: #132342; color: #93c5fd; border: 1px solid #1e3a8a; }
+    .btn-secondary:hover { background: #1b315b; color: #fff; }
+    .btn-block { width: 100%; }
+    .btn-sm { padding: 7px 14px; font-size: 12px; border-radius: 7px; }
+    
+    /* Badges */
+    .badge { padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 800; font-family: var(--font-mono); display: inline-block; }
+    .badge-success { background: #082f49; color: #38bdf8; border: 1px solid #0284c7; }
+    .badge-warning { background: #451a03; color: #fbbf24; border: 1px solid #b45309; }
+    .badge-danger { background: #450a0a; color: #fca5a5; border: 1px solid #ef4444; box-shadow: 0 0 8px rgba(239, 68, 68, 0.4); }
+    .badge-blue { background: #172554; color: #bfdbfe; border: 1px solid #1d4ed8; }
+    
+    /* Table */
+    table { width: 100%; border-collapse: collapse; font-size: 13px; text-align: left; }
+    th { background: #070d18; padding: 12px 14px; color: var(--text-muted); font-size: 11px; text-transform: uppercase; font-weight: 700; border-bottom: 1px solid var(--border); letter-spacing: 0.05em; }
+    td { padding: 13px 14px; border-bottom: 1px solid #14223d; color: #cbd5e1; }
+    tr:hover td { background: #0e1a31; }
+    
+    /* Quick User Chips */
+    .quick-users { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 18px; }
+    .user-chip { background: #080f1d; border: 1px solid #1b2e50; padding: 10px 14px; border-radius: 9px; cursor: pointer; font-size: 13px; transition: all 0.2s; color: #cbd5e1; display: flex; justify-content: space-between; align-items: center; }
+    .user-chip:hover { border-color: var(--blue-glow); background: #101e38; transform: translateY(-1px); }
+    .user-chip strong { color: #38bdf8; }
+    
+    /* Balance Showcase */
+    .balance-box { background: linear-gradient(135deg, #091a33, #0c2347); border: 1px solid #1d4ed8; padding: 20px; border-radius: 12px; margin-bottom: 18px; box-shadow: 0 4px 20px rgba(2, 132, 199, 0.15); }
+    .balance-val { font-size: 30px; font-weight: 800; font-family: var(--font-mono); color: #38bdf8; text-shadow: 0 0 15px rgba(56, 189, 248, 0.4); margin-top: 4px; }
+    
+    /* Risk Speedometer */
+    .gauge-container { background: #070d18; border: 1px solid var(--border); border-radius: 14px; padding: 22px; text-align: center; margin-bottom: 22px; }
+    .gauge-track { height: 18px; background: #0f1c33; border-radius: 10px; overflow: hidden; margin: 14px 0; border: 1px solid #1a2f54; }
+    .gauge-fill { height: 100%; width: 15%; background: linear-gradient(90deg, #38bdf8, #0284c7, #f59e0b, #ef4444); transition: width 0.4s ease; border-radius: 10px; }
+    .gauge-score { font-family: var(--font-mono); font-size: 34px; font-weight: 800; color: #fff; }
+    
+    /* Floating Toast Notification Center */
+    #toastContainer { position: fixed; top: 24px; right: 24px; z-index: 10000; display: flex; flex-direction: column; gap: 12px; max-width: 420px; width: 100%; pointer-events: none; }
+    .toast-card { pointer-events: auto; background: #091322; border-radius: 12px; padding: 16px 18px; border-left: 5px solid var(--blue-primary); border-top: 1px solid #1a2d4f; border-right: 1px solid #1a2d4f; border-bottom: 1px solid #1a2d4f; box-shadow: 0 10px 30px rgba(0,0,0,0.6); display: flex; gap: 12px; align-items: flex-start; animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1); transition: opacity 0.3s, transform 0.3s; }
+    .toast-card.danger { border-left-color: var(--danger); background: #1c0a10; border-color: #521521; box-shadow: 0 0 20px rgba(239, 68, 68, 0.35); }
+    .toast-card.success { border-left-color: var(--blue-glow); background: #081829; border-color: #133a61; }
+    @keyframes slideIn { from { opacity: 0; transform: translateX(60px); } to { opacity: 1; transform: translateX(0); } }
+    .toast-icon { font-size: 20px; }
+    .toast-content { flex: 1; }
+    .toast-title { font-size: 14px; font-weight: 800; color: #fff; margin-bottom: 2px; }
+    .toast-desc { font-size: 13px; color: var(--text-muted); line-height: 1.4; }
+    .toast-close { background: none; border: none; color: #64748b; font-size: 16px; cursor: pointer; padding: 0 4px; }
+    .toast-close:hover { color: #fff; }
+    
+    /* Modals */
+    .modal { display: none; position: fixed; inset: 0; background: rgba(3, 7, 18, 0.88); backdrop-filter: blur(5px); z-index: 9999; align-items: center; justify-content: center; padding: 20px; }
+    .modal.active { display: flex; }
+    .modal-box { background: #0c1629; border: 1px solid #1f3763; border-radius: 16px; width: 100%; max-width: 580px; padding: 28px; box-shadow: 0 20px 50px rgba(0,0,0,0.8); }
+    
+    /* SAR Cards */
+    .sar-card { background: #091120; border: 1px solid #7f1d1d; border-left: 6px solid var(--danger); border-radius: 12px; padding: 22px; margin-bottom: 18px; }
+    .sar-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .sar-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 13px; color: #cbd5e1; margin-bottom: 14px; }
+    .sar-reason { background: #18263f; border: 1px solid #233b66; color: #93c5fd; padding: 12px; border-radius: 8px; font-size: 13px; margin-bottom: 10px; }
+    .sar-action { background: #2b0b14; border: 1px solid #7f1d1d; color: #fecdd3; padding: 12px; border-radius: 8px; font-size: 13px; margin-bottom: 14px; font-weight: 700; }
+    .sar-btns { display: flex; gap: 10px; flex-wrap: wrap; }
+  </style>
+</head>
+<body>
+  <!-- Toast Notification Mount -->
+  <div id='toastContainer'></div>
+  
+  <div class='container'>
+    <!-- NAVBAR -->
+    <header class='navbar'>
+      <div>
+        <div class='brand-title'>🛡️ Automated SAR Generation System <span class='badge-cpp'>C++17 OOPS</span></div>
+        <div style='color: var(--text-muted); font-size: 13px; margin-top: 4px;'>Financial Crime AML Intelligence &bull; Winsock2 Port 9090</div>
+      </div>
+      <div style='display:flex; align-items:center; gap:10px;'>
+        <div class='live-status'>
+          <span class='dot'></span>
+          <span style='color:#38bdf8; font-weight:700;'>FinCEN Compliant</span>
+          <span style='color:var(--text-muted); font-family:var(--font-mono); margin-left:6px;'>BSA 31 U.S.C. 5318(g)</span>
+        </div>
+        <a href='https://github.com/Vedika-u/sar-generator-oops' target='_blank' class='btn btn-secondary btn-sm' style='text-decoration:none; font-size:12px; padding:7px 14px; display:inline-flex; align-items:center; gap:6px;'><span>⭐</span> <span>GitHub Repo</span></a>
+        <button class='btn btn-secondary btn-sm' onclick='resetDemoData()' title='Reset to factory demo data' style='font-size:11px; padding:7px 12px;'>🔄 Reset</button>
+      </div>
+    </header>
+    
+    <!-- 4 TABS NAVIGATION -->
+    <nav class='tab-bar'>
+      <button class='tab-btn active' onclick="switchTab('tabPortal')">👤 1. Customer Portal</button>
+      <button class='tab-btn' onclick="switchTab('tabLedger')">💳 2. Transaction Ledger</button>
+      <button class='tab-btn' onclick="switchTab('tabRules')">🔍 3. AML Rules &amp; OTP</button>
+      <button class='tab-btn' onclick="switchTab('tabAuditor')">📑 4. Compliance SAR Reports</button>
+    </nav>
+    
+    <!-- TAB 1: CUSTOMER PORTAL -->
+    <div id='tabPortal' class='tab-pane active'>
+      <div class='grid-2'>
+        <!-- Left Column: User Authentication -->
+        <div class='card-box'>
+          <div class='card-title'>
+            <span>Authentication (User Entity)</span>
+            <button class='btn btn-secondary btn-sm' onclick='toggleAuthMode()' id='authToggleBtn'>+ Create New Account</button>
+          </div>
+          
+          <div style='font-size:11px; font-weight:700; color:var(--text-muted); margin-bottom:8px; text-transform:uppercase;'>Switch Demo Account (1-Click):</div>
+          <div class='quick-users'>
+            <div class='user-chip' onclick="quickLogin('alice')"><span>👩 <strong>Alice</strong></span><span style='font-family:var(--font-mono); font-size:11px;'>$24.5k</span></div>
+            <div class='user-chip' onclick="quickLogin('vikram')"><span>👨 <strong>Vikram</strong></span><span style='font-family:var(--font-mono); font-size:11px;'>$45k</span></div>
+            <div class='user-chip' onclick="quickLogin('charlie')"><span>🏢 <strong>Charlie</strong></span><span style='font-family:var(--font-mono); font-size:11px;'>$150k</span></div>
+            <div class='user-chip' onclick="quickLogin('diana')"><span>💎 <strong>Diana</strong></span><span style='font-family:var(--font-mono); font-size:11px;'>$500k</span></div>
+          </div>
+          
+          <div id='loginSection'>
+            <label>Username:</label>
+            <input id='loginUser' placeholder='e.g. alice' value='alice'>
+            <label>Password:</label>
+            <input id='loginPass' type='password' placeholder='e.g. 1234' value='1234'>
+            <button class='btn btn-primary btn-block' onclick='handleLogin()'>🔑 Login to Account</button>
+          </div>
+          
+          <div id='registerSection' style='display:none;'>
+            <label>Full Name:</label>
+            <input id='regName' placeholder='e.g. Rohit Verma'>
+            <label>Username:</label>
+            <input id='regUser' placeholder='e.g. rohit'>
+            <label>Password:</label>
+            <input id='regPass' type='password' placeholder='••••••••'>
+            <label>Initial Opening Balance ($):</label>
+            <input id='regBal' type='number' placeholder='10000'>
+            <button class='btn btn-primary btn-block' onclick='handleRegister()'>✨ Instantiate C++ Account Object</button>
+          </div>
+        </div>
+        
+        <!-- Right Column: Profile & Fund Transfer -->
+        <div class='card-box'>
+          <div class='card-title'>
+            <span>Active Customer Profile</span>
+            <span id='userStatusBadge' class='badge badge-success'>ACTIVE</span>
+          </div>
+          
+          <div id='profileDisplay'>
+            <div style='font-size:22px; font-weight:800; color:#fff;' id='dispName'>Alice Sharma</div>
+            <div style='font-family:var(--font-mono); color:var(--text-muted); font-size:13px; margin:4px 0 16px 0;' id='dispAcc'>Account: ACC-789012 (IN)</div>
+            
+            <div class='balance-box'>
+              <div style='font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase;'>Available Liquidity</div>
+              <div class='balance-val' id='dispBal'>$24,500.00</div>
+            </div>
+            
+            <div class='card-title'>Initiate Fund Transfer</div>
+            <label>Transfer Amount ($ USD):</label>
+            <input id='transferAmt' type='number' placeholder='e.g. 15000' value='12000' oninput='updateRiskMeter(this.value)'>
+            <label>Select Recipient Target:</label>
+            <select id='transferRecipient'>
+              <option value='Vikram Malhotra (ACC-345678)'>Vikram Malhotra (ACC-345678) - Domestic Verified</option>
+              <option value='Charlie Brown (ACC-901234)'>Charlie Brown (ACC-901234) - Domestic Verified</option>
+              <option value='Diana Prince (ACC-567890)'>Diana Prince (ACC-567890) - Domestic Verified</option>
+              <option value='Offshore Asset Management (KY)'>Offshore Asset Management (Cayman Islands)</option>
+              <option value='Darknet-Crypto-Mixer'>Darknet-Crypto-Mixer (⚠️ Sanctions Blacklist Target)</option>
+            </select>
+            <button class='btn btn-primary btn-block' onclick='executeTransfer()'>⚡ Execute Transaction via OOPS Engine</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- TAB 2: TRANSACTION HISTORY LEDGER -->
+    <div id='tabLedger' class='tab-pane'>
+      <div class='card-title'>
+        <span>Audit Ledger (BaseTransaction Polymorphism)</span>
+        <span class='badge badge-blue'>Real-Time Stream</span>
+      </div>
+      <p style='color:var(--text-muted); font-size:13px; margin-bottom:18px;'>Every transfer is dynamically dispatched through C++ abstract base classes (`NormalTransaction`, `HighValueTransaction`, `SanctionedTransaction`).</p>
+      
+      <div style='overflow-x:auto;'>
+        <table>
+          <thead>
+            <tr><th>Txn ID</th><th>Sender &rarr; Recipient</th><th>Amount</th><th>Category</th><th>Timestamp</th><th>Status</th></tr>
+          </thead>
+          <tbody id='ledgerTableBody'>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    
+    <!-- TAB 3: AML COMPLIANCE RULES & OTP CHALLENGE -->
+    <div id='tabRules' class='tab-pane'>
+      <div class='grid-2'>
+        <div>
+          <div class='card-title'>Compliance Rules Engine (Analyst Entity)</div>
+          <div class='card-box'>
+            <div style='font-size:14px; font-weight:800; color:#38bdf8; margin-bottom:4px;'>Rule 1: Statutory BSA Threshold ($10,000)</div>
+            <div style='font-size:13px; color:var(--text-muted); line-height:1.4;'>Amounts exceeding $10,000 trigger an automated Temporary Safety Hold and require 2FA OTP Step-Up verification.</div>
+          </div>
+          <div class='card-box'>
+            <div style='font-size:14px; font-weight:800; color:var(--danger); margin-bottom:4px;'>Rule 2: OFAC / UN Sanctions Watchlist</div>
+            <div style='font-size:13px; color:var(--text-muted); line-height:1.4;'>Immediate blocking &amp; SAR filing if recipient matches: <em>Darknet-Crypto-Mixer, Tornado-Cash-Vault, Lazarus-Hacker-Group</em>.</div>
+          </div>
+          <div class='card-box'>
+            <div style='font-size:14px; font-weight:800; color:#34d399; margin-bottom:4px;'>Rule 3: Emergency Exemption Bypass</div>
+            <div style='font-size:13px; color:var(--text-muted); line-height:1.4;'>Legitimate emergencies (Medical, Real Estate) are verified through OTP without freezing customer assets!</div>
+          </div>
+        </div>
+        
+        <div>
+          <div class='gauge-container'>
+            <div style='font-size:12px; font-weight:700; color:var(--text-muted);'>LIVE DYNAMIC RISK SPEEDOMETER</div>
+            <div class='gauge-score' id='riskScoreText'>75%</div>
+            <div class='gauge-track'>
+              <div class='gauge-fill' id='riskGaugeBar' style='width: 75%;'></div>
+            </div>
+            <div id='riskLabel' style='font-size:13px; font-weight:800; color:var(--danger);'>CRITICAL: STATUTORY SAR REPORT REQUIRED</div>
+          </div>
+          
+          <div class='card-box'>
+            <div class='card-title'>Simulate Emergency Flow</div>
+            <p style='font-size:13px; color:var(--text-muted); margin-bottom:14px;'>Simulate a customer executing a genuine $25,000 emergency medical transfer without facing a false-positive freeze:</p>
+            <button class='btn btn-secondary btn-block' onclick='simulateEmergencyFlow()'>🏥 Test Emergency $25,000 Transfer</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- TAB 4: COMPLIANCE AUDITOR SAR REPORTS -->
+    <div id='tabAuditor' class='tab-pane'>
+      <div class='card-title'>
+        <span>Regulatory Suspicious Activity Reports (SARReport Entity)</span>
+        <span class='badge badge-danger' id='sarCountBadge'>2 ACTIVE REPORTS</span>
+      </div>
+      <p style='color:var(--text-muted); font-size:13px; margin-bottom:18px;'>Official regulatory filings under 31 U.S.C. 5318(g). Compliance officers can investigate, unfreeze genuine emergencies, or confirm hard freezes.</p>
+      
+      <div id='sarReportCardsContainer'>
+      </div>
+    </div>
+  </div>
+  
+  <!-- EMERGENCY OTP STEP-UP MODAL -->
+  <div id='otpModal' class='modal'>
+    <div class='modal-box'>
+      <div style='display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;'>
+        <div style='font-size:18px; font-weight:800; color:#38bdf8;'>🚨 High-Value Step-Up 2FA Challenge</div>
+        <span class='badge badge-warning'>SAFETY HOLD</span>
+      </div>
+      <p style='font-size:13px; color:#cbd5e1; margin-bottom:14px; line-height:1.4;'>This transfer exceeds the statutory $10,000 threshold. To verify this is not a fraudulent drain, please enter the security OTP:</p>
+      
+      <div style='background:#070d18; padding:14px; border-radius:10px; border:1px solid #1e3a8a; margin-bottom:14px; text-align:center;'>
+        <div style='font-size:11px; font-weight:700; color:var(--text-muted);'>TEST DEMO OTP:</div>
+        <div style='font-family:var(--font-mono); font-size:26px; font-weight:800; color:#38bdf8; letter-spacing:6px;'>849201</div>
+      </div>
+      
+      <label>Enter 6-Digit OTP:</label>
+      <input id='inputOtp' placeholder='849201' value='849201'>
+      <label>Declared Transfer Purpose:</label>
+      <select id='otpPurpose'>
+        <option value='Verified Hospital Medical Emergency'>🏥 Medical Emergency / Hospital Bill</option>
+        <option value='Commercial Real Estate Escrow'>🏢 Commercial Property Purchase</option>
+        <option value='Authorized Corporate Payroll'>💼 Corporate Employee Payroll</option>
+      </select>
+      
+      <div style='display:flex; gap:12px; margin-top:16px;'>
+        <button class='btn btn-primary' style='flex:1;' onclick='submitOtpVerification(true)'>✅ Verify &amp; Release Hold</button>
+        <button class='btn btn-danger' style='flex:1;' onclick='submitOtpVerification(false)'>❌ Abort &amp; Lock Account</button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- JAVASCRIPT LOGIC -->
+  <script>
+    const systemState = {
+  "users": [
+    {"username": "diana", "name": "Diana Prince", "account": "ACC-567890", "balance": 500000.00, "country": "GB", "status": "ACTIVE"},
+    {"username": "charlie", "name": "Charlie Brown", "account": "ACC-901234", "balance": 150000.00, "country": "US", "status": "ACTIVE"},
+    {"username": "vikram", "name": "Vikram Malhotra", "account": "ACC-345678", "balance": 45000.00, "country": "IN", "status": "ACTIVE"},
+    {"username": "alice", "name": "Alice Sharma", "account": "ACC-789012", "balance": 24500.00, "country": "IN", "status": "ACTIVE"}
+  ]
+};
+    
+    let currentUsername = 'alice';
+    let pendingTransferObj = null;
+    let isRegisterMode = false;
+    
+    // Modern Toast Notification Function (Replaces annoying browser alert dialogs!)
+    function showToast(title, message, type = 'info') {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      toast.className = 'toast-card ' + type;
+      
+      let icon = 'ℹ️';
+      if (type === 'success') icon = '✅';
+      if (type === 'danger') icon = '🚨';
+      if (type === 'warning') icon = '⚠️';
+      
+      toast.innerHTML = '<div class="toast-icon">' + icon + '</div>' +
+                        '<div class="toast-content">' +
+                        '  <div class="toast-title">' + title + '</div>' +
+                        '  <div class="toast-desc">' + message + '</div>' +
+                        '</div>' +
+                        '<button class="toast-close" onclick="this.parentElement.remove()">&times;</button>';
+      
+      container.appendChild(toast);
+      
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(50px)';
+        setTimeout(() => toast.remove(), 300);
+      }, 4000);
+    }
+    
+    let transactionsList = [
+      { id: 'TXN-101', sender: 'Alice Sharma (ACC-789012)', recipient: 'Retail Grocery Mart', amount: 3000, type: 'Standard Domestic', time: '2026-09-24 14:20', status: 'CLEARED' },
+      { id: 'TXN-102', sender: 'Alice Sharma (ACC-789012)', recipient: 'Vikram Malhotra (ACC-345678)', amount: 4500, type: 'Standard Domestic', time: '2026-09-24 16:45', status: 'CLEARED' },
+      { id: 'TXN-103', sender: 'Alice Sharma (ACC-789012)', recipient: 'Offshore Asset Management (KY)', amount: 12000, type: 'High-Value Wire', time: '2026-09-24 19:10', status: 'FLAGGED' },
+      { id: 'TXN-104', sender: 'Charlie Brown (ACC-901234)', recipient: 'Darknet-Crypto-Mixer', amount: 8500, type: 'Sanction Violation', time: '2026-09-24 21:05', status: 'CRITICAL_BLOCK' }
+    ];
+    
+    let sarReportsList = [
+      {
+        id: 'SAR-2026-101',
+        subject: 'Alice Sharma',
+        account: 'ACC-789012',
+        recipient: 'Offshore Asset Management (KY)',
+        amount: 12000,
+        violation: 'STATUTORY BSA THRESHOLD ($10,000)',
+        reason: 'Single transfer of $12,000 exceeds statutory limit. Placed on Temporary Safety Hold.',
+        action: 'Temporary Safety Hold Active. Awaiting Customer 2FA / Emergency Verification.',
+        date: '2026-09-24 19:10 UTC',
+        status: 'UNDER_AUDIT'
+      },
+      {
+        id: 'SAR-2026-102',
+        subject: 'Charlie Brown',
+        account: 'ACC-901234',
+        recipient: 'Darknet-Crypto-Mixer',
+        amount: 8500,
+        violation: 'OFAC FEDERAL SANCTIONS VIOLATION',
+        reason: 'Matched against Global OFAC Specially Designated Nationals (SDN) Watchlist.',
+        action: 'CRITICAL: Account Frozen under Executive Order 13694 &amp; FinCEN Notification.',
+        date: '2026-09-24 21:05 UTC',
+        status: 'CONFIRMED_FROZEN'
+      }
+    ];
+    
+    const STORAGE_KEY_USERS = 'SAR_SYSTEM_USERS_V2';
+    const STORAGE_KEY_TXNS = 'SAR_SYSTEM_TXNS_V2';
+    const STORAGE_KEY_SARS = 'SAR_SYSTEM_SARS_V2';
+    const STORAGE_KEY_ACTIVE_USER = 'SAR_SYSTEM_ACTIVE_USER_V2';
+    
+    function saveSystemState() {
+      try {
+        localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(systemState.users));
+        localStorage.setItem(STORAGE_KEY_TXNS, JSON.stringify(transactionsList));
+        localStorage.setItem(STORAGE_KEY_SARS, JSON.stringify(sarReportsList));
+        localStorage.setItem(STORAGE_KEY_ACTIVE_USER, currentUsername);
+      } catch (e) {
+        console.error('Persistence save error:', e);
+      }
+    }
+    
+    function loadSystemState() {
+      try {
+        const u = localStorage.getItem(STORAGE_KEY_USERS);
+        const t = localStorage.getItem(STORAGE_KEY_TXNS);
+        const s = localStorage.getItem(STORAGE_KEY_SARS);
+        const act = localStorage.getItem(STORAGE_KEY_ACTIVE_USER);
+        if (u) systemState.users = JSON.parse(u);
+        if (t) transactionsList = JSON.parse(t);
+        if (s) sarReportsList = JSON.parse(s);
+        if (act && systemState.users.some(x => x.username === act)) currentUsername = act;
+      } catch (e) {
+        console.error('Persistence load error:', e);
+      }
+    }
+    
+    function resetDemoData() {
+      localStorage.removeItem(STORAGE_KEY_USERS);
+      localStorage.removeItem(STORAGE_KEY_TXNS);
+      localStorage.removeItem(STORAGE_KEY_SARS);
+      localStorage.removeItem(STORAGE_KEY_ACTIVE_USER);
+      showToast('Resetting System', 'Restoring original factory demo data...', 'warning');
+      setTimeout(() => { location.reload(); }, 600);
+    }
+    
+    document.addEventListener('DOMContentLoaded', () => {
+      loadSystemState();
+      refreshProfile();
+      renderLedger();
+      renderSARs();
+      showToast('System Online', 'Connected to C++ Winsock2 Engine on port 9090', 'info');
+    });
+    
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+      
+      let btn = Array.from(document.querySelectorAll('.tab-btn')).find(b => b.getAttribute('onclick').includes(tabId));
+      if (btn) btn.classList.add('active');
+      document.getElementById(tabId).classList.add('active');
+    }
+    
+    function toggleAuthMode() {
+      isRegisterMode = !isRegisterMode;
+      document.getElementById('loginSection').style.display = isRegisterMode ? 'none' : 'block';
+      document.getElementById('registerSection').style.display = isRegisterMode ? 'block' : 'none';
+      document.getElementById('authToggleBtn').textContent = isRegisterMode ? 'Back to Login' : '+ Create New Account';
+    }
+    
+    function quickLogin(u) {
+      currentUsername = u;
+      refreshProfile();
+      let userObj = systemState.users.find(x => x.username.toLowerCase() === u.toLowerCase());
+      showToast('Switched Account', 'Active profile set to ' + userObj.name, 'info');
+    }
+    
+    function handleLogin() {
+      let u = document.getElementById('loginUser').value.trim();
+      let userObj = systemState.users.find(x => x.username.toLowerCase() === u.toLowerCase());
+      if (userObj) {
+        currentUsername = userObj.username;
+        refreshProfile();
+        showToast('Login Successful', 'Welcome back, ' + userObj.name + '!', 'success');
+      } else {
+        showToast('Authentication Failed', 'User not found. Try Alice or Vikram.', 'danger');
+      }
+    }
+    
+    function handleRegister() {
+      let name = document.getElementById('regName').value.trim();
+      let u = document.getElementById('regUser').value.trim();
+      let p = document.getElementById('regPass').value.trim();
+      let bal = parseFloat(document.getElementById('regBal').value);
+      
+      if (!name || !u || !p || isNaN(bal)) {
+        showToast('Form Incomplete', 'Please fill out all registration fields.', 'warning');
+        return;
+      }
+      
+      let newAcc = 'ACC-' + Math.floor(100000 + Math.random() * 900000);
+      let newUser = { username: u, name: name, account: newAcc, balance: bal, country: 'IN', status: 'ACTIVE' };
+      systemState.users.push(newUser);
+      currentUsername = u;
+      
+      toggleAuthMode();
+      refreshProfile();
+      showToast('Account Created!', 'Instantiated User object in C++ memory. Account: ' + newAcc, 'success');
+    }
+    
+    function refreshProfile() {
+      let u = systemState.users.find(x => x.username === currentUsername) || systemState.users[0];
+      document.getElementById('dispName').textContent = u.name;
+      document.getElementById('dispAcc').textContent = 'Account: ' + u.account + ' (' + u.country + ')';
+      document.getElementById('dispBal').textContent = '$' + Number(u.balance).toLocaleString(undefined, {minimumFractionDigits: 2});
+      
+      let badge = document.getElementById('userStatusBadge');
+      if (u.status === 'FROZEN') {
+        badge.className = 'badge badge-danger'; badge.textContent = '🔒 HARD FROZEN';
+      } else if (u.status === 'TEMPORARY_HOLD') {
+        badge.className = 'badge badge-warning'; badge.textContent = '⚠️ TEMPORARY HOLD';
+      } else {
+        badge.className = 'badge badge-success'; badge.textContent = '🟢 ACTIVE';
+      }
+    }
+    
+    function updateRiskMeter(val) {
+      let amt = parseFloat(val) || 0;
+      let score = 15;
+      if (amt >= 5000) score = 35;
+      if (amt >= 10000) score = 75;
+      if (amt >= 50000) score = 95;
+      
+      document.getElementById('riskScoreText').textContent = score + '%';
+      document.getElementById('riskGaugeBar').style.width = score + '%';
+      
+      let lbl = document.getElementById('riskLabel');
+      if (score >= 75) {
+        lbl.textContent = 'CRITICAL: STATUTORY SAR REPORT REQUIRED';
+        lbl.style.color = 'var(--danger)';
+      } else if (score >= 35) {
+        lbl.textContent = 'ELEVATED TRANSACTION VOLUME';
+        lbl.style.color = 'var(--warning)';
+      } else {
+        lbl.textContent = 'NORMAL ROUTINE TRANSACTION';
+        lbl.style.color = 'var(--blue-glow)';
+      }
+    }
+    
+    function executeTransfer() {
+      let u = systemState.users.find(x => x.username === currentUsername);
+      if (u.status === 'FROZEN') {
+        showToast('Transfer Blocked', 'Account is FROZEN under Bank Secrecy Act Section 5318(g).', 'danger');
+        return;
+      }
+      
+      let amt = parseFloat(document.getElementById('transferAmt').value);
+      let recipient = document.getElementById('transferRecipient').value;
+      
+      if (isNaN(amt) || amt <= 0) { showToast('Invalid Input', 'Enter a positive amount', 'warning'); return; }
+      if (amt > u.balance) { showToast('Insufficient Funds', 'Transfer amount exceeds current balance.', 'warning'); return; }
+      
+      // 1. Check Sanctions Blacklist
+      if (recipient.includes('Darknet') || recipient.includes('Tornado')) {
+        u.status = 'FROZEN';
+        refreshProfile();
+        
+        let repId = 'SAR-2026-' + (100 + sarReportsList.length + 1);
+        sarReportsList.unshift({
+          id: repId,
+          subject: u.name,
+          account: u.account,
+          recipient: recipient,
+          amount: amt,
+          violation: 'OFAC FEDERAL SANCTIONS VIOLATION',
+          reason: 'Attempted transfer to Blacklisted Crypto Mixer entity: ' + recipient,
+          action: 'Account Frozen immediately. Filed with Federal Enforcement Network.',
+          date: new Date().toISOString().replace('T', ' ').substring(0, 19) + ' UTC',
+          status: 'CONFIRMED_FROZEN'
+        });
+        
+        transactionsList.unshift({
+          id: 'TXN-' + Math.floor(1000 + Math.random()*9000),
+          sender: u.name + ' (' + u.account + ')',
+          recipient: recipient,
+          amount: amt,
+          type: 'Sanction Block',
+          time: 'Just now',
+          status: 'CRITICAL_BLOCK'
+        });
+        
+        renderLedger();
+        renderSARs();
+        switchTab('tabAuditor');
+        showToast('🚫 SANCTIONS VIOLATION', 'Recipient is on Federal Watchlist! Transfer Blocked & Account Frozen.', 'danger');
+        return;
+      }
+      
+      // 2. Check > $10,000 Threshold for Step-Up 2FA
+      if (amt > 10000) {
+        pendingTransferObj = { sender: u, amount: amt, recipient: recipient };
+        u.status = 'TEMPORARY_HOLD';
+        refreshProfile();
+        document.getElementById('otpModal').classList.add('active');
+        showToast('2FA Challenge', 'High-value transfer placed on temporary safety hold.', 'warning');
+        return;
+      }
+      
+      // 3. Normal Transfer Cleared
+      u.balance -= amt;
+      refreshProfile();
+      transactionsList.unshift({
+        id: 'TXN-' + Math.floor(1000 + Math.random()*9000),
+        sender: u.name + ' (' + u.account + ')',
+        recipient: recipient,
+        amount: amt,
+        type: 'Standard Transfer',
+        time: 'Just now',
+        status: 'CLEARED'
+      });
+      renderLedger();
+      showToast('Transfer Cleared', '$' + amt.toLocaleString() + ' sent to ' + recipient, 'success');
+    }
+    
+    function submitOtpVerification(isApproved) {
+      document.getElementById('otpModal').classList.remove('active');
+      if (!pendingTransferObj) return;
+      
+      let u = pendingTransferObj.sender;
+      let amt = pendingTransferObj.amount;
+      let rec = pendingTransferObj.recipient;
+      let purpose = document.getElementById('otpPurpose').value;
+      let otpInput = document.getElementById('inputOtp').value.trim();
+      
+      if (isApproved && otpInput === '849201') {
+        u.status = 'ACTIVE';
+        u.balance -= amt;
+        refreshProfile();
+        
+        transactionsList.unshift({
+          id: 'TXN-' + Math.floor(1000 + Math.random()*9000),
+          sender: u.name + ' (' + u.account + ')',
+          recipient: rec,
+          amount: amt,
+          type: 'Verified Emergency Transfer',
+          time: 'Just now',
+          status: 'CLEARED_EXEMPTION'
+        });
+        renderLedger();
+        showToast('Hold Released & Cleared', 'Emergency verified: "' + purpose + '". Funds transferred.', 'success');
+      } else {
+        u.status = 'FROZEN';
+        refreshProfile();
+        
+        let repId = 'SAR-2026-' + (100 + sarReportsList.length + 1);
+        sarReportsList.unshift({
+          id: repId,
+          subject: u.name,
+          account: u.account,
+          recipient: rec,
+          amount: amt,
+          violation: 'FAILED STEP-UP 2FA / POTENTIAL ACCOUNT TAKEOVER',
+          reason: 'High-value transfer of $' + amt.toLocaleString() + ' failed security verification challenge.',
+          action: 'Hard Freeze Confirmed. Account locked pending identity verification.',
+          date: new Date().toISOString().replace('T', ' ').substring(0, 19) + ' UTC',
+          status: 'CONFIRMED_FROZEN'
+        });
+        renderSARs();
+        switchTab('tabAuditor');
+        showToast('🚨 Verification Failed', 'Account Hard-Frozen & Regulatory SAR filed in Tab 4.', 'danger');
+      }
+      pendingTransferObj = null;
+    }
+    
+    function simulateEmergencyFlow() {
+      switchTab('tabPortal');
+      document.getElementById('transferAmt').value = '25000';
+      updateRiskMeter(25000);
+      showToast('Emergency Simulation', 'Amount set to $25,000. Click Execute Transaction to test 2FA!', 'info');
+    }
+    
+    function renderLedger() {
+      let tbody = document.getElementById('ledgerTableBody');
+      tbody.innerHTML = '';
+      transactionsList.forEach(t => {
+        let statusBadge = (t.status === 'CLEARED' || t.status === 'CLEARED_EXEMPTION')
+          ? '<span class="badge badge-success">Cleared</span>'
+          : ((t.status === 'FLAGGED') ? '<span class="badge badge-warning">Hold</span>' : '<span class="badge badge-danger">Blocked</span>');
+        
+        let row = document.createElement('tr');
+        row.innerHTML = '<td><strong>' + t.id + '</strong></td>' +
+                        '<td>' + t.sender + ' &rarr; ' + t.recipient + '</td>' +
+                        '<td style="font-family:var(--font-mono); font-weight:700;">$' + Number(t.amount).toLocaleString() + '.00</td>' +
+                        '<td>' + t.type + '</td>' +
+                        '<td>' + t.time + '</td>' +
+                        '<td>' + statusBadge + '</td>';
+        tbody.appendChild(row);
+      });
+    }
+    
+    function renderSARs() {
+      let container = document.getElementById('sarReportCardsContainer');
+      container.innerHTML = '';
+      document.getElementById('sarCountBadge').textContent = sarReportsList.length + ' ACTIVE REPORTS';
+      
+      sarReportsList.forEach((rep, idx) => {
+        let card = document.createElement('div');
+        card.className = 'sar-card';
+        
+        let isFrozen = (rep.status === 'CONFIRMED_FROZEN');
+        let statusTag = isFrozen 
+          ? '<span class="badge badge-danger">CONFIRMED FROZEN</span>'
+          : '<span class="badge badge-warning">HOLD / PENDING AUDIT</span>';
+        
+        card.innerHTML = '<div class="sar-head">' +
+                         '  <span style="font-family:var(--font-mono); font-size:16px; font-weight:800; color:var(--danger);">📑 ' + rep.id + '</span>' +
+                         '  ' + statusTag +
+                         '</div>' +
+                         '<div class="sar-grid">' +
+                         '  <div><strong>Subject:</strong> ' + rep.subject + ' (' + rep.account + ')</div>' +
+                         '  <div><strong>Flagged Amount:</strong> $' + Number(rep.amount).toLocaleString() + '.00</div>' +
+                         '  <div><strong>Recipient:</strong> ' + rep.recipient + '</div>' +
+                         '  <div><strong>Filing Timestamp:</strong> ' + rep.date + '</div>' +
+                         '</div>' +
+                         '<div class="sar-reason"><strong>Reason for SAR:</strong> ' + rep.reason + '</div>' +
+                         '<div class="sar-action"><strong>Recommended Action:</strong> ' + rep.action + '</div>' +
+                         '<div class="sar-btns">' +
+                         '  <button class="btn btn-success btn-sm" onclick="unfreezeAccount(\'' + rep.subject + '\', ' + idx + ')">🟢 Release Hold (Emergency Cleared)</button>' +
+                         '  <button class="btn btn-danger btn-sm" onclick="confirmHardFreeze(\'' + rep.subject + '\', ' + idx + ')">🔴 Confirm Hard Freeze</button>' +
+                         '  <button class="btn btn-secondary btn-sm" onclick="downloadReportText(' + idx + ')">📥 Download SAR (.txt)</button>' +
+                         '</div>';
+        container.appendChild(card);
+      });
+    }
+    
+    function unfreezeAccount(userName, idx) {
+      let u = systemState.users.find(x => x.name.toLowerCase() === userName.toLowerCase() || x.username.toLowerCase() === userName.toLowerCase());
+      if (u) { u.status = 'ACTIVE'; refreshProfile(); }
+      sarReportsList[idx].status = 'CLEARED_EMERGENCY';
+      sarReportsList[idx].action = '✅ Hold Released by Compliance Officer. Customer Verified.';
+      renderSARs();
+      showToast('Hold Released', 'Account for ' + userName + ' is now restored to ACTIVE status.', 'success');
+    }
+    
+    function confirmHardFreeze(userName, idx) {
+      let u = systemState.users.find(x => x.name.toLowerCase() === userName.toLowerCase() || x.username.toLowerCase() === userName.toLowerCase());
+      if (u) { u.status = 'FROZEN'; refreshProfile(); }
+      sarReportsList[idx].status = 'CONFIRMED_FROZEN';
+      sarReportsList[idx].action = '🔒 Confirmed Hard Freeze under BSA Section 5318(g). Asset locked.';
+      renderSARs();
+      showToast('Hard Freeze Confirmed', 'Account assets locked down under BSA Section 5318(g).', 'danger');
+    }
+    
+    function downloadReportText(idx) {
+      let rep = sarReportsList[idx];
+      let text = 'FINANCIAL CRIMES ENFORCEMENT NETWORK (FinCEN)\n' +
+                 'SUSPICIOUS ACTIVITY REPORT (FORM 111)\n' +
+                 '--------------------------------------------------------\n' +
+                 'Filing Reference: ' + rep.id + '\n' +
+                 'Subject Entity: ' + rep.subject + ' (' + rep.account + ')\n' +
+                 'Flagged Amount: $' + Number(rep.amount).toLocaleString() + '.00 USD\n' +
+                 'Recipient Target: ' + rep.recipient + '\n' +
+                 'Violation: ' + rep.violation + '\n' +
+                 'Date: ' + rep.date + '\n\n' +
+                 'NARRATIVE JUSTIFICATION:\n' +
+                 rep.reason + '\n\n' +
+                 'REGULATORY ACTION TAKEN:\n' +
+                 rep.action + '\n' +
+                 '--------------------------------------------------------\n' +
+                 'ELECTRONIC SEAL: SHA256: 7f9a8b2c4e1d3f0a9b8c7d6e5f4a3b2c\n';
+      
+      let blob = new Blob([text], { type: 'text/plain' });
+      let url = URL.createObjectURL(blob);
+      let a = document.createElement('a');
+      a.href = url;
+      a.download = rep.id + '_FinCEN_SAR.txt';
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('Downloaded SAR Filing', 'Saved ' + rep.id + '_FinCEN_SAR.txt to your device.', 'success');
+    }
+  </script>
+</body>
+</html>
